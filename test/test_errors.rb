@@ -65,4 +65,38 @@ class TestErrors < Minitest::Test
     assert_equal "/tmp/f", err.path
     assert_equal "missing", err.message
   end
+
+  def test_out_of_range_error_inherits_from_error
+    assert_operator IERS::OutOfRangeError, :<, IERS::Error
+  end
+
+  def test_out_of_range_error_has_requested_mjd
+    err = IERS::OutOfRangeError.new(
+      "out of range",
+      requested_mjd: 40000.0,
+      available_range: 41317.0..57754.0
+    )
+
+    assert_in_delta 40000.0, err.requested_mjd
+  end
+
+  def test_out_of_range_error_has_available_range
+    err = IERS::OutOfRangeError.new(
+      "out of range",
+      requested_mjd: 40000.0,
+      available_range: 41317.0..57754.0
+    )
+
+    assert_equal 41317.0..57754.0, err.available_range
+  end
+
+  def test_out_of_range_error_has_message
+    err = IERS::OutOfRangeError.new(
+      "out of range",
+      requested_mjd: 40000.0,
+      available_range: 41317.0..57754.0
+    )
+
+    assert_equal "out of range", err.message
+  end
 end

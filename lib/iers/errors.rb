@@ -47,4 +47,14 @@ module IERS
   end
 
   class ConfigurationError < Error; end
+
+  class OutOfRangeError < Error
+    attr_reader :requested_mjd, :available_range
+
+    def initialize(message = nil, requested_mjd: nil, available_range: nil)
+      @requested_mjd = requested_mjd
+      @available_range = available_range
+      super(message)
+    end
+  end
 end
