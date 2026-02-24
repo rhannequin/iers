@@ -6,6 +6,7 @@ require_relative "iers/configuration"
 require_relative "iers/update_result"
 require_relative "iers/data_status"
 require_relative "iers/downloader"
+require_relative "iers/data"
 
 module IERS
   class << self
