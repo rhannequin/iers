@@ -1,0 +1,9 @@
+inherit_gem:
+  standard: config/base.yml
+
+plugins:
+  - rubocop-minitest
+  - rubocop-rake
+
+AllCops:
+  NewCops: enable

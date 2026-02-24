@@ -1,0 +1,15 @@
+/.bundle/
+/.yardoc
+/_yardoc/
+/coverage/
+/doc/
+/pkg/
+/spec/reports/
+/tmp/
+/Gemfile.lock
+/.ruby-version
+
+# Code editor and IDE files
+/.idea/
+/.ruby-lsp/
+/.vscode/
