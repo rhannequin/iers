@@ -19,6 +19,11 @@ module IERS
       all
     end
 
+    def next_scheduled
+      today = Date.today
+      all.find { |entry| entry.effective_date > today }
+    end
+
     def at(input = nil, jd: nil, mjd: nil)
       query_mjd = TimeScale.to_mjd(input, jd: jd, mjd: mjd)
       parser_entries = IERS::Data.leap_second_entries

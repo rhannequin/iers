@@ -161,4 +161,63 @@ class TestLeapSecond < Minitest::Test
 
     assert_equal 41317.0..57754.0, error.available_range
   end
+
+  def test_next_scheduled_returns_nil_when_no_future_entries
+    assert_nil IERS::LeapSecond.next_scheduled
+  end
+
+  def test_next_scheduled_returns_entry_when_future_entry_exists
+    IERS.configure do |config|
+      config.leap_second_path = fixture_path("leap_second_with_future.dat")
+    end
+
+    result = IERS::LeapSecond.next_scheduled
+
+    assert_instance_of IERS::LeapSecond::Entry, result
+  end
+
+  def test_next_scheduled_returns_correct_tai_utc
+    IERS.configure do |config|
+      config.leap_second_path = fixture_path("leap_second_with_future.dat")
+    end
+
+    result = IERS::LeapSecond.next_scheduled
+
+    assert_equal 38, result.tai_utc
+  end
+
+  def test_next_scheduled_returns_correct_effective_date
+    IERS.configure do |config|
+      config.leap_second_path = fixture_path("leap_second_with_future.dat")
+    end
+
+    result = IERS::LeapSecond.next_scheduled
+
+    assert_equal Date.new(2028, 7, 1), result.effective_date
+  end
+
+  def test_at_day_before_second_entry
+    assert_equal 10, IERS::LeapSecond.at(Date.new(1972, 6, 30))
+  end
+
+  def test_at_far_in_future_returns_latest_known_value
+    assert_equal 37, IERS::LeapSecond.at(Time.utc(2099, 1, 1))
+  end
+
+  def test_at_mid_year_between_two_entries
+    assert_equal 11, IERS::LeapSecond.at(Date.new(1972, 10, 15))
+  end
+
+  def test_at_with_time_at_end_of_day
+    assert_equal 36,
+      IERS::LeapSecond.at(Time.utc(2016, 12, 31, 23, 59, 59))
+  end
+
+  def test_at_in_2006
+    assert_equal 33, IERS::LeapSecond.at(Date.new(2006, 1, 1))
+  end
+
+  def test_at_between_2006_and_2009
+    assert_equal 33, IERS::LeapSecond.at(Date.new(2007, 6, 15))
+  end
 end
