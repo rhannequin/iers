@@ -15,8 +15,6 @@ class TestData < Minitest::Test
     IERS.reset_configuration!
   end
 
-  # update! single file
-
   def test_update_finals_downloads_to_cache_dir
     stub_request(:get, "https://datacenter.iers.org/data/csv/finals2000A.all")
       .to_return(status: 200, body: "finals data content")
@@ -78,8 +76,6 @@ class TestData < Minitest::Test
     assert_instance_of IERS::NetworkError, result.errors[:finals]
   end
 
-  # update! all files
-
   def test_update_all_downloads_both_files
     stub_request(:get, "https://datacenter.iers.org/data/csv/finals2000A.all")
       .to_return(status: 200, body: "finals data")
@@ -114,8 +110,6 @@ class TestData < Minitest::Test
     refute_predicate result, :success?
   end
 
-  # update! with custom path overrides
-
   def test_update_finals_uses_custom_path_when_configured
     custom_path = Pathname(@tmpdir).join("custom", "my_finals.dat")
     IERS.configure { |c| c.finals_path = custom_path }
@@ -138,8 +132,6 @@ class TestData < Minitest::Test
     refute_path_exists Pathname(@tmpdir).join("finals2000A.all")
   end
 
-  # update! with custom source URLs
-
   def test_update_with_custom_source_url
     IERS.configure do |c|
       c.sources = {
@@ -155,8 +147,6 @@ class TestData < Minitest::Test
     assert_equal "mirror finals data",
       Pathname(@tmpdir).join("finals2000A.all").read
   end
-
-  # status
 
   def test_status_without_cache_is_not_cached
     status = IERS::Data.status
@@ -205,8 +195,6 @@ class TestData < Minitest::Test
     assert_equal :custom, status.source
   end
 
-  # clear_cache!
-
   def test_clear_cache_removes_cached_files
     stub_request(:get, "https://datacenter.iers.org/data/csv/finals2000A.all")
       .to_return(status: 200, body: "finals data")
@@ -233,5 +221,86 @@ class TestData < Minitest::Test
 
   def test_clear_cache_is_safe_when_no_cache_exists
     IERS::Data.clear_cache!
+  end
+
+  def test_finals_entries_returns_parsed_entries
+    write_finals_fixture
+
+    entries = IERS::Data.finals_entries
+
+    assert_equal 1, entries.size
+  end
+
+  def test_finals_entries_returns_finals_entry_objects
+    write_finals_fixture
+
+    entries = IERS::Data.finals_entries
+
+    assert_instance_of IERS::Parsers::Finals::Entry, entries.first
+  end
+
+  def test_finals_entries_uses_custom_path
+    custom = Pathname(@tmpdir).join("custom", "my_finals.dat")
+    custom.dirname.mkpath
+    custom.write(finals_line)
+    IERS.configure { |c| c.finals_path = custom }
+
+    entries = IERS::Data.finals_entries
+
+    assert_equal 1, entries.size
+  end
+
+  def test_finals_entries_raises_file_not_found_when_not_downloaded
+    assert_raises(IERS::FileNotFoundError) do
+      IERS::Data.finals_entries
+    end
+  end
+
+  def test_leap_second_entries_returns_parsed_entries
+    write_leap_second_fixture
+
+    entries = IERS::Data.leap_second_entries
+
+    assert_equal 1, entries.size
+  end
+
+  def test_leap_second_entries_returns_leap_second_entry_objects
+    write_leap_second_fixture
+
+    entries = IERS::Data.leap_second_entries
+
+    assert_instance_of IERS::Parsers::LeapSecond::Entry, entries.first
+  end
+
+  def test_leap_second_entries_uses_custom_path
+    custom = Pathname(@tmpdir).join("custom", "my_leap.dat")
+    custom.dirname.mkpath
+    custom.write("    41317.0    1  1 1972       10\n")
+    IERS.configure { |c| c.leap_second_path = custom }
+
+    entries = IERS::Data.leap_second_entries
+
+    assert_equal 1, entries.size
+  end
+
+  def test_leap_second_entries_raises_file_not_found_when_not_downloaded
+    assert_raises(IERS::FileNotFoundError) do
+      IERS::Data.leap_second_entries
+    end
+  end
+
+  private
+
+  def finals_line
+    "73 1 2 41684.00 I  0.120733 0.009786  0.136966 0.015902  I 0.8084178 0.0002710  0.0000 0.1916  P    -0.766    0.199    -0.720    0.300   .143000   .137000   .8075000   -18.637    -3.667\n"
+  end
+
+  def write_finals_fixture
+    Pathname(@tmpdir).join("finals2000A.all").write(finals_line)
+  end
+
+  def write_leap_second_fixture
+    Pathname(@tmpdir).join("Leap_Second.dat")
+      .write("    41317.0    1  1 1972       10\n")
   end
 end

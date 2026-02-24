@@ -54,6 +54,16 @@ module IERS
       end
     end
 
+    def finals_entries
+      path = resolve_path(:finals)
+      Parsers::Finals.parse(path)
+    end
+
+    def leap_second_entries
+      path = resolve_path(:leap_seconds)
+      Parsers::LeapSecond.parse(path)
+    end
+
     def resolve_path(source, config = IERS.configuration)
       case source
       when :finals
