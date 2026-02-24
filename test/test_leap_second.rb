@@ -94,4 +94,71 @@ class TestLeapSecond < Minitest::Test
   def test_table_first_entry_has_tai_utc
     assert_equal 10, IERS::LeapSecond.table.first.tai_utc
   end
+
+  def test_at_on_last_entry_date
+    assert_equal 37, IERS::LeapSecond.at(Time.utc(2017, 1, 1))
+  end
+
+  def test_at_after_last_entry
+    assert_equal 37, IERS::LeapSecond.at(Time.utc(2020, 6, 15))
+  end
+
+  def test_at_before_last_entry
+    assert_equal 36, IERS::LeapSecond.at(Time.utc(2016, 12, 31))
+  end
+
+  def test_at_on_first_entry_date
+    assert_equal 10, IERS::LeapSecond.at(Time.utc(1972, 1, 1))
+  end
+
+  def test_at_between_first_and_second_entry
+    assert_equal 10, IERS::LeapSecond.at(Time.utc(1972, 3, 15))
+  end
+
+  def test_at_on_second_entry_date
+    assert_equal 11, IERS::LeapSecond.at(Time.utc(1972, 7, 1))
+  end
+
+  def test_at_with_date_object
+    assert_equal 37, IERS::LeapSecond.at(Date.new(2017, 1, 1))
+  end
+
+  def test_at_with_datetime_object
+    assert_equal 37, IERS::LeapSecond.at(DateTime.new(2017, 1, 1))
+  end
+
+  def test_at_with_jd_keyword
+    assert_equal 37, IERS::LeapSecond.at(jd: 2_457_754.5)
+  end
+
+  def test_at_with_mjd_keyword
+    assert_equal 37, IERS::LeapSecond.at(mjd: 57754.0)
+  end
+
+  def test_at_returns_integer
+    assert_instance_of Integer,
+      IERS::LeapSecond.at(Time.utc(2017, 1, 1))
+  end
+
+  def test_at_before_1972_raises_out_of_range_error
+    assert_raises(IERS::OutOfRangeError) do
+      IERS::LeapSecond.at(Time.utc(1971, 12, 31))
+    end
+  end
+
+  def test_at_before_1972_error_has_requested_mjd
+    error = assert_raises(IERS::OutOfRangeError) do
+      IERS::LeapSecond.at(Time.utc(1971, 12, 31))
+    end
+
+    assert_in_delta 41316.0, error.requested_mjd
+  end
+
+  def test_at_before_1972_error_has_available_range
+    error = assert_raises(IERS::OutOfRangeError) do
+      IERS::LeapSecond.at(Time.utc(1971, 12, 31))
+    end
+
+    assert_equal 41317.0..57754.0, error.available_range
+  end
 end
