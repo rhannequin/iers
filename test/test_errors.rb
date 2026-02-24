@@ -42,4 +42,27 @@ class TestErrors < Minitest::Test
   def test_configuration_error_inherits_from_error
     assert_operator IERS::ConfigurationError, :<, IERS::Error
   end
+
+  def test_parse_error_inherits_from_data_error
+    assert_operator IERS::ParseError, :<, IERS::DataError
+  end
+
+  def test_parse_error_has_path_and_line_number
+    err = IERS::ParseError.new("bad line", path: "/tmp/f", line_number: 42)
+
+    assert_equal "/tmp/f", err.path
+    assert_equal 42, err.line_number
+    assert_equal "bad line", err.message
+  end
+
+  def test_file_not_found_error_inherits_from_data_error
+    assert_operator IERS::FileNotFoundError, :<, IERS::DataError
+  end
+
+  def test_file_not_found_error_has_path
+    err = IERS::FileNotFoundError.new("missing", path: "/tmp/f")
+
+    assert_equal "/tmp/f", err.path
+    assert_equal "missing", err.message
+  end
 end
