@@ -8,6 +8,7 @@ require_relative "iers/data_status"
 require_relative "iers/downloader"
 require_relative "iers/parsers"
 require_relative "iers/data"
+require_relative "iers/time_scale"
 
 module IERS
   class << self
