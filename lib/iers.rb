@@ -3,6 +3,7 @@
 require_relative "iers/version"
 require_relative "iers/errors"
 require_relative "iers/configuration"
+require_relative "iers/update_result"
 
 module IERS
   class << self
