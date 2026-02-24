@@ -1,0 +1,6 @@
+#    MJD        Date        TAI-UTC (s)
+#           day month year
+#    ---    --------------   ------
+#
+    41317.0    1  1 1972       10
+    NOT_A_NUMBER    1  1 1973       12
