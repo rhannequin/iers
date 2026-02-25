@@ -192,3 +192,100 @@ class TestUT1DetailedAt < Minitest::Test
     end
   end
 end
+
+class TestUT1Between < Minitest::Test
+  def setup
+    IERS.configure do |config|
+      config.finals_path = fixture_path("finals_10_days.dat")
+    end
+  end
+
+  def teardown
+    IERS.reset_configuration!
+  end
+
+  def fixture_path(name)
+    Pathname(__dir__).join("fixtures", name)
+  end
+
+  def test_returns_array_of_entries
+    results = IERS::UT1.between(
+      Date.new(1973, 1, 3),
+      Date.new(1973, 1, 5)
+    )
+
+    assert_instance_of IERS::UT1::Entry, results.first
+  end
+
+  def test_correct_count_for_date_range
+    results = IERS::UT1.between(
+      Date.new(1973, 1, 3),
+      Date.new(1973, 1, 7)
+    )
+
+    assert_equal 5, results.size
+  end
+
+  def test_first_entry_mjd
+    results = IERS::UT1.between(
+      Date.new(1973, 1, 3),
+      Date.new(1973, 1, 7)
+    )
+
+    assert_in_delta 41685.0, results.first.mjd
+  end
+
+  def test_last_entry_mjd
+    results = IERS::UT1.between(
+      Date.new(1973, 1, 3),
+      Date.new(1973, 1, 7)
+    )
+
+    assert_in_delta 41689.0, results.last.mjd
+  end
+
+  def test_entries_have_ut1_utc
+    results = IERS::UT1.between(
+      Date.new(1973, 1, 3),
+      Date.new(1973, 1, 5)
+    )
+
+    assert_instance_of Float, results.first.ut1_utc
+  end
+
+  def test_entries_have_data_quality
+    results = IERS::UT1.between(
+      Date.new(1973, 1, 3),
+      Date.new(1973, 1, 5)
+    )
+
+    assert_equal :observed, results.first.data_quality
+  end
+
+  def test_empty_array_for_out_of_data_range
+    results = IERS::UT1.between(
+      Date.new(1980, 1, 1),
+      Date.new(1980, 1, 5)
+    )
+
+    assert_empty results
+  end
+
+  def test_single_day_range
+    results = IERS::UT1.between(
+      Date.new(1973, 1, 5),
+      Date.new(1973, 1, 5)
+    )
+
+    assert_equal 1, results.size
+  end
+
+  def test_returns_frozen_array
+    results = IERS::UT1.between(
+      Date.new(1973, 1, 3),
+      Date.new(1973, 1, 5)
+    )
+
+    assert_predicate results, :frozen?
+  end
+end

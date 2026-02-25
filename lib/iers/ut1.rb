@@ -50,6 +50,22 @@ module IERS
       )
     end
 
+    def between(start_date, end_date)
+      start_mjd = TimeScale.to_mjd(start_date)
+      end_mjd = TimeScale.to_mjd(end_date)
+      entries = Data.finals_entries
+
+      entries
+        .select { |e| e.mjd.between?(start_mjd, end_mjd) }
+        .map do |e|
+          Entry.new(
+            ut1_utc: e.ut1_utc,
+            mjd: e.mjd,
+            data_quality: FLAG_TO_QUALITY.fetch(e.ut1_flag, :observed)
+          )
+        end.freeze
+    end
+
     def derive_quality(window_entries)
       if window_entries.any? { |e| e.ut1_flag == "P" }
         :predicted
