@@ -16,8 +16,10 @@ class TestData < Minitest::Test
   end
 
   def test_update_finals_downloads_to_cache_dir
-    stub_request(:get, "https://datacenter.iers.org/data/csv/finals2000A.all")
-      .to_return(status: 200, body: "finals data content")
+    stub_request(
+      :get,
+      "https://datacenter.iers.org/data/latestVersion/finals.all.iau2000.txt"
+    ).to_return(status: 200, body: "finals data content")
 
     IERS::Data.update!(:finals)
 
@@ -26,8 +28,10 @@ class TestData < Minitest::Test
   end
 
   def test_update_finals_returns_successful_result
-    stub_request(:get, "https://datacenter.iers.org/data/csv/finals2000A.all")
-      .to_return(status: 200, body: "finals data content")
+    stub_request(
+      :get,
+      "https://datacenter.iers.org/data/latestVersion/finals.all.iau2000.txt"
+    ).to_return(status: 200, body: "finals data content")
 
     result = IERS::Data.update!(:finals)
 
@@ -35,8 +39,10 @@ class TestData < Minitest::Test
   end
 
   def test_update_finals_includes_finals_in_updated_files
-    stub_request(:get, "https://datacenter.iers.org/data/csv/finals2000A.all")
-      .to_return(status: 200, body: "finals data content")
+    stub_request(
+      :get,
+      "https://datacenter.iers.org/data/latestVersion/finals.all.iau2000.txt"
+    ).to_return(status: 200, body: "finals data content")
 
     result = IERS::Data.update!(:finals)
 
@@ -59,8 +65,10 @@ class TestData < Minitest::Test
   end
 
   def test_update_single_file_network_error_is_not_successful
-    stub_request(:get, "https://datacenter.iers.org/data/csv/finals2000A.all")
-      .to_return(status: 500)
+    stub_request(
+      :get,
+      "https://datacenter.iers.org/data/latestVersion/finals.all.iau2000.txt"
+    ).to_return(status: 500)
 
     result = IERS::Data.update!(:finals)
 
@@ -68,8 +76,10 @@ class TestData < Minitest::Test
   end
 
   def test_update_single_file_network_error_collects_error
-    stub_request(:get, "https://datacenter.iers.org/data/csv/finals2000A.all")
-      .to_return(status: 500)
+    stub_request(
+      :get,
+      "https://datacenter.iers.org/data/latestVersion/finals.all.iau2000.txt"
+    ).to_return(status: 500)
 
     result = IERS::Data.update!(:finals)
 
@@ -77,8 +87,10 @@ class TestData < Minitest::Test
   end
 
   def test_update_all_downloads_both_files
-    stub_request(:get, "https://datacenter.iers.org/data/csv/finals2000A.all")
-      .to_return(status: 200, body: "finals data")
+    stub_request(
+      :get,
+      "https://datacenter.iers.org/data/latestVersion/finals.all.iau2000.txt"
+    ).to_return(status: 200, body: "finals data")
     stub_request(:get, "https://hpiers.obspm.fr/iers/bul/bulc/Leap_Second.dat")
       .to_return(status: 200, body: "leap data")
 
@@ -89,8 +101,10 @@ class TestData < Minitest::Test
   end
 
   def test_update_all_with_partial_failure_still_writes_successful_file
-    stub_request(:get, "https://datacenter.iers.org/data/csv/finals2000A.all")
-      .to_return(status: 500)
+    stub_request(
+      :get,
+      "https://datacenter.iers.org/data/latestVersion/finals.all.iau2000.txt"
+    ).to_return(status: 500)
     stub_request(:get, "https://hpiers.obspm.fr/iers/bul/bulc/Leap_Second.dat")
       .to_return(status: 200, body: "leap data")
 
@@ -100,8 +114,10 @@ class TestData < Minitest::Test
   end
 
   def test_update_all_with_partial_failure_is_not_successful
-    stub_request(:get, "https://datacenter.iers.org/data/csv/finals2000A.all")
-      .to_return(status: 500)
+    stub_request(
+      :get,
+      "https://datacenter.iers.org/data/latestVersion/finals.all.iau2000.txt"
+    ).to_return(status: 500)
     stub_request(:get, "https://hpiers.obspm.fr/iers/bul/bulc/Leap_Second.dat")
       .to_return(status: 200, body: "leap data")
 
@@ -113,8 +129,10 @@ class TestData < Minitest::Test
   def test_update_finals_uses_custom_path_when_configured
     custom_path = Pathname(@tmpdir).join("custom", "my_finals.dat")
     IERS.configure { |c| c.finals_path = custom_path }
-    stub_request(:get, "https://datacenter.iers.org/data/csv/finals2000A.all")
-      .to_return(status: 200, body: "custom finals data")
+    stub_request(
+      :get,
+      "https://datacenter.iers.org/data/latestVersion/finals.all.iau2000.txt"
+    ).to_return(status: 200, body: "custom finals data")
 
     IERS::Data.update!(:finals)
 
@@ -124,8 +142,10 @@ class TestData < Minitest::Test
   def test_update_finals_custom_path_does_not_write_to_default_location
     custom_path = Pathname(@tmpdir).join("custom", "my_finals.dat")
     IERS.configure { |c| c.finals_path = custom_path }
-    stub_request(:get, "https://datacenter.iers.org/data/csv/finals2000A.all")
-      .to_return(status: 200, body: "custom finals data")
+    stub_request(
+      :get,
+      "https://datacenter.iers.org/data/latestVersion/finals.all.iau2000.txt"
+    ).to_return(status: 200, body: "custom finals data")
 
     IERS::Data.update!(:finals)
 
@@ -161,8 +181,10 @@ class TestData < Minitest::Test
   end
 
   def test_status_with_cached_files_is_cached
-    stub_request(:get, "https://datacenter.iers.org/data/csv/finals2000A.all")
-      .to_return(status: 200, body: "data")
+    stub_request(
+      :get,
+      "https://datacenter.iers.org/data/latestVersion/finals.all.iau2000.txt"
+    ).to_return(status: 200, body: "data")
     stub_request(:get, "https://hpiers.obspm.fr/iers/bul/bulc/Leap_Second.dat")
       .to_return(status: 200, body: "data")
     IERS::Data.update!
@@ -173,10 +195,14 @@ class TestData < Minitest::Test
   end
 
   def test_status_with_cached_files_has_numeric_cache_age
-    stub_request(:get, "https://datacenter.iers.org/data/csv/finals2000A.all")
-      .to_return(status: 200, body: "data")
-    stub_request(:get, "https://hpiers.obspm.fr/iers/bul/bulc/Leap_Second.dat")
-      .to_return(status: 200, body: "data")
+    stub_request(
+      :get,
+      "https://datacenter.iers.org/data/latestVersion/finals.all.iau2000.txt"
+    ).to_return(status: 200, body: "data")
+    stub_request(
+      :get,
+      "https://hpiers.obspm.fr/iers/bul/bulc/Leap_Second.dat"
+    ).to_return(status: 200, body: "data")
     IERS::Data.update!
 
     status = IERS::Data.status
@@ -196,8 +222,10 @@ class TestData < Minitest::Test
   end
 
   def test_clear_cache_removes_cached_files
-    stub_request(:get, "https://datacenter.iers.org/data/csv/finals2000A.all")
-      .to_return(status: 200, body: "finals data")
+    stub_request(
+      :get,
+      "https://datacenter.iers.org/data/latestVersion/finals.all.iau2000.txt"
+    ).to_return(status: 200, body: "finals data")
     stub_request(:get, "https://hpiers.obspm.fr/iers/bul/bulc/Leap_Second.dat")
       .to_return(status: 200, body: "leap data")
     IERS::Data.update!

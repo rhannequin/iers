@@ -4,7 +4,7 @@ module IERS
   class Configuration
     DEFAULT_CACHE_DIR = Pathname("~/.cache/iers").expand_path
     DEFAULT_SOURCES = {
-      finals: "https://datacenter.iers.org/data/csv/finals2000A.all",
+      finals: "https://datacenter.iers.org/data/latestVersion/finals.all.iau2000.txt",
       leap_seconds: "https://hpiers.obspm.fr/iers/bul/bulc/Leap_Second.dat"
     }.freeze
     DEFAULT_DOWNLOAD_TIMEOUT = 30

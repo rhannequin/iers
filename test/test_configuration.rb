@@ -18,7 +18,7 @@ class TestConfiguration < Minitest::Test
   def test_default_sources
     config = IERS::Configuration.new
 
-    assert_equal "https://datacenter.iers.org/data/csv/finals2000A.all",
+    assert_equal "https://datacenter.iers.org/data/latestVersion/finals.all.iau2000.txt",
       config.sources[:finals]
     assert_equal "https://hpiers.obspm.fr/iers/bul/bulc/Leap_Second.dat",
       config.sources[:leap_seconds]
