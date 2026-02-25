@@ -9,6 +9,7 @@ require_relative "iers/downloader"
 require_relative "iers/parsers"
 require_relative "iers/data"
 require_relative "iers/time_scale"
+require_relative "iers/interpolation"
 require_relative "iers/leap_second"
 
 module IERS
