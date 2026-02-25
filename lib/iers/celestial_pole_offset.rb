@@ -17,5 +17,80 @@ module IERS
         data_quality == :predicted
       end
     end
+
+    FLAG_TO_QUALITY = {
+      "I" => :observed, "P" => :predicted
+    }.freeze
+    private_constant :FLAG_TO_QUALITY
+
+    module_function
+
+    # @param input [Time, Date, DateTime, nil]
+    # @param jd [Float, nil] Julian Date
+    # @param mjd [Float, nil] Modified Julian Date
+    # @param interpolation [Symbol, nil] +:lagrange+ or +:linear+
+    # @return [Entry]
+    # @raise [OutOfRangeError]
+    def at(input = nil, jd: nil, mjd: nil, interpolation: nil)
+      query_mjd = TimeScale.to_mjd(input, jd: jd, mjd: mjd)
+      entries = Data.finals_entries
+      method = interpolation || IERS.configuration.interpolation
+
+      case method
+      when :lagrange
+        order = IERS.configuration.lagrange_order
+        window = EopLookup.window(
+          entries, query_mjd, order: order
+        )
+        x = interpolate_cpo(window, query_mjd, :lagrange, :x)
+        y = interpolate_cpo(window, query_mjd, :lagrange, :y)
+        quality = derive_quality(window)
+      when :linear
+        bracket = EopLookup.bracket(entries, query_mjd)
+        x = interpolate_cpo(bracket, query_mjd, :linear, :x)
+        y = interpolate_cpo(bracket, query_mjd, :linear, :y)
+        quality = derive_quality(bracket)
+      end
+
+      Entry.new(
+        x: x,
+        y: y,
+        mjd: query_mjd,
+        data_quality: quality
+      )
+    end
+
+    def interpolate_cpo(window, query_mjd, method, component)
+      xs = window.map(&:mjd)
+      ys = window.map { |e| best_cpo(e, component) }
+
+      case method
+      when :lagrange
+        Interpolation.lagrange(xs, ys, query_mjd)
+      when :linear
+        Interpolation.linear(xs, ys, query_mjd)
+      end
+    end
+
+    def best_cpo(entry, component)
+      case component
+      when :x
+        entry.bulletin_b_dx || entry.dx
+      when :y
+        entry.bulletin_b_dy || entry.dy
+      end
+    end
+
+    def derive_quality(window_entries)
+      if window_entries.any? { |e| e.nutation_flag == "P" }
+        :predicted
+      else
+        :observed
+      end
+    end
+
+    private_class_method :interpolate_cpo,
+      :best_cpo,
+      :derive_quality
   end
 end
