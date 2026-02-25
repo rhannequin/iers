@@ -12,9 +12,16 @@ module IERS
       end
     end
 
+    FLAG_TO_QUALITY = {"I" => :observed, "P" => :predicted}.freeze
+    private_constant :FLAG_TO_QUALITY
+
     module_function
 
     def at(input = nil, jd: nil, mjd: nil)
+      detailed_at(input, jd: jd, mjd: mjd).ut1_utc
+    end
+
+    def detailed_at(input = nil, jd: nil, mjd: nil)
       query_mjd = TimeScale.to_mjd(input, jd: jd, mjd: mjd)
       entries = Data.finals_entries
       config = IERS.configuration
@@ -26,13 +33,31 @@ module IERS
         )
         xs = window.map(&:mjd)
         ys = window.map(&:ut1_utc)
-        Interpolation.lagrange(xs, ys, query_mjd)
+        ut1_utc = Interpolation.lagrange(xs, ys, query_mjd)
+        quality = derive_quality(window)
       when :linear
         bracket = EopLookup.bracket(entries, query_mjd)
         xs = bracket.map(&:mjd)
         ys = bracket.map(&:ut1_utc)
-        Interpolation.linear(xs, ys, query_mjd)
+        ut1_utc = Interpolation.linear(xs, ys, query_mjd)
+        quality = derive_quality(bracket)
+      end
+
+      Entry.new(
+        ut1_utc: ut1_utc,
+        mjd: query_mjd,
+        data_quality: quality
+      )
+    end
+
+    def derive_quality(window_entries)
+      if window_entries.any? { |e| e.ut1_flag == "P" }
+        :predicted
+      else
+        :observed
       end
     end
+
+    private_class_method :derive_quality
   end
 end

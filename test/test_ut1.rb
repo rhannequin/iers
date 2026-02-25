@@ -121,3 +121,74 @@ class TestUT1At < Minitest::Test
     end
   end
 end
+
+class TestUT1DetailedAt < Minitest::Test
+  def setup
+    IERS.configure do |config|
+      config.finals_path = fixture_path("finals_mixed_ip.dat")
+    end
+  end
+
+  def teardown
+    IERS.reset_configuration!
+  end
+
+  def fixture_path(name)
+    Pathname(__dir__).join("fixtures", name)
+  end
+
+  def test_returns_entry_instance
+    result = IERS::UT1.detailed_at(mjd: 41685.5)
+
+    assert_instance_of IERS::UT1::Entry, result
+  end
+
+  def test_entry_has_ut1_utc_float
+    result = IERS::UT1.detailed_at(mjd: 41685.5)
+
+    assert_instance_of Float, result.ut1_utc
+  end
+
+  def test_entry_has_query_mjd
+    result = IERS::UT1.detailed_at(mjd: 41685.5)
+
+    assert_in_delta 41685.5, result.mjd
+  end
+
+  def test_observed_data_is_observed
+    result = IERS::UT1.detailed_at(mjd: 41685.5)
+
+    assert_predicate result, :observed?
+  end
+
+  def test_predicted_data_is_predicted
+    result = IERS::UT1.detailed_at(mjd: 41688.5)
+
+    assert_predicate result, :predicted?
+  end
+
+  def test_crossing_boundary_is_predicted
+    result = IERS::UT1.detailed_at(mjd: 41687.5)
+
+    assert_predicate result, :predicted?
+  end
+
+  def test_ut1_utc_matches_scalar_at
+    detailed = IERS::UT1.detailed_at(mjd: 41685.5)
+    scalar = IERS::UT1.at(mjd: 41685.5)
+
+    assert_in_delta scalar, detailed.ut1_utc
+  end
+
+  def test_accepts_time_object
+    result = IERS::UT1.detailed_at(Time.utc(1973, 1, 4))
+
+    assert_instance_of IERS::UT1::Entry, result
+  end
+
+  def test_out_of_range_raises_error
+    assert_raises(IERS::OutOfRangeError) do
+      IERS::UT1.detailed_at(mjd: 41683.0)
+    end
+  end
+end
