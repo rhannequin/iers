@@ -16,6 +16,7 @@ require_relative "iers/ut1"
 require_relative "iers/polar_motion"
 require_relative "iers/celestial_pole_offset"
 require_relative "iers/length_of_day"
+require_relative "iers/delta_t"
 
 module IERS
   class << self
