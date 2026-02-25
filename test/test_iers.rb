@@ -40,3 +40,34 @@ class TestIERS < Minitest::Test
     assert_same IERS.configuration, IERS.configuration
   end
 end
+
+class TestReset < Minitest::Test
+  def setup
+    IERS.configure do |config|
+      config.finals_path = fixture_path("finals_10_days.dat")
+      config.leap_second_path = fixture_path("leap_second_query.dat")
+    end
+  end
+
+  def teardown
+    IERS.reset!
+  end
+
+  def fixture_path(name)
+    Pathname(__dir__).join("fixtures", name)
+  end
+
+  def test_reset_clears_configuration
+    IERS.configure { |c| c.download_timeout = 99 }
+    IERS.reset!
+
+    assert_equal 30, IERS.configuration.download_timeout
+  end
+
+  def test_reset_clears_data_cache
+    IERS::Data.finals_entries
+    IERS.reset!
+
+    refute_predicate IERS::Data, :loaded?
+  end
+end

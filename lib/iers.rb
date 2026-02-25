@@ -37,5 +37,10 @@ module IERS
       @configuration = nil
       Data.clear_loaded!
     end
+
+    # @return [void]
+    def reset!
+      reset_configuration!
+    end
   end
 end
