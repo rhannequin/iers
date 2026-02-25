@@ -12,13 +12,20 @@ module IERS
     DEFAULT_LAGRANGE_ORDER = 4
     INTERPOLATION_METHODS = %i[lagrange linear].freeze
 
-    attr_reader :cache_dir,
-      :sources,
-      :download_timeout,
-      :finals_path,
-      :leap_second_path,
-      :interpolation,
-      :lagrange_order
+    # @return [Pathname]
+    attr_reader :cache_dir
+    # @return [Hash{Symbol => String}]
+    attr_reader :sources
+    # @return [Integer]
+    attr_reader :download_timeout
+    # @return [Pathname, nil]
+    attr_reader :finals_path
+    # @return [Pathname, nil]
+    attr_reader :leap_second_path
+    # @return [Symbol] +:lagrange+ or +:linear+
+    attr_reader :interpolation
+    # @return [Integer]
+    attr_reader :lagrange_order
 
     def initialize
       @cache_dir = DEFAULT_CACHE_DIR

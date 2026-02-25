@@ -1,9 +1,15 @@
 # frozen_string_literal: true
 
 module IERS
+  # @api private
   module EopLookup
     module_function
 
+    # @param entries [Array] sorted finals entries
+    # @param mjd [Float]
+    # @param order [Integer] number of points in the window
+    # @return [Array]
+    # @raise [OutOfRangeError]
     def window(entries, mjd, order: 4)
       validate_range!(entries, mjd)
 
@@ -17,6 +23,10 @@ module IERS
       entries[start, order]
     end
 
+    # @param entries [Array] sorted finals entries
+    # @param mjd [Float]
+    # @return [Array] two-element array bracketing the query point
+    # @raise [OutOfRangeError]
     def bracket(entries, mjd)
       validate_range!(entries, mjd)
 

@@ -3,11 +3,17 @@
 require "date"
 
 module IERS
+  # @api private
   module TimeScale
     JD_MJD_OFFSET = 2_400_000.5
 
     module_function
 
+    # @param input [Time, Date, DateTime, nil]
+    # @param jd [Float, nil] Julian Date
+    # @param mjd [Float, nil] Modified Julian Date
+    # @return [Float] Modified Julian Date
+    # @raise [ArgumentError] if no valid input is provided
     def to_mjd(input = nil, jd: nil, mjd: nil)
       if mjd
         Float(mjd)

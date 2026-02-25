@@ -2,10 +2,13 @@
 
 module IERS
   module LeapSecond
+    # @attr effective_date [Date]
+    # @attr tai_utc [Integer] cumulative TAI−UTC offset in seconds
     Entry = ::Data.define(:effective_date, :tai_utc)
 
     module_function
 
+    # @return [Array<Entry>]
     def all
       IERS::Data.leap_second_entries.map do |parser_entry|
         Entry.new(
@@ -15,15 +18,22 @@ module IERS
       end.freeze
     end
 
+    # @return [Array<Entry>]
     def table
       all
     end
 
+    # @return [Entry, nil]
     def next_scheduled
       today = Date.today
       all.find { |entry| entry.effective_date > today }
     end
 
+    # @param input [Time, Date, DateTime, nil]
+    # @param jd [Float, nil] Julian Date
+    # @param mjd [Float, nil] Modified Julian Date
+    # @return [Integer] TAI−UTC in seconds
+    # @raise [OutOfRangeError]
     def at(input = nil, jd: nil, mjd: nil)
       query_mjd = TimeScale.to_mjd(input, jd: jd, mjd: mjd)
       parser_entries = IERS::Data.leap_second_entries

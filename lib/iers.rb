@@ -17,14 +17,18 @@ require_relative "iers/polar_motion"
 
 module IERS
   class << self
+    # @return [Configuration]
     def configuration
       @configuration ||= Configuration.new
     end
 
+    # @yield [Configuration]
+    # @return [void]
     def configure
       yield configuration
     end
 
+    # @return [void]
     def reset_configuration!
       @configuration = nil
     end

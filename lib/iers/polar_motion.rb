@@ -2,11 +2,17 @@
 
 module IERS
   module PolarMotion
+    # @attr x [Float] pole x-coordinate in arcseconds
+    # @attr y [Float] pole y-coordinate in arcseconds
+    # @attr mjd [Float] Modified Julian Date of the query
+    # @attr data_quality [Symbol] +:observed+ or +:predicted+
     Entry = ::Data.define(:x, :y, :mjd, :data_quality) do
+      # @return [Boolean]
       def observed?
         data_quality == :observed
       end
 
+      # @return [Boolean]
       def predicted?
         data_quality == :predicted
       end
@@ -19,6 +25,12 @@ module IERS
 
     module_function
 
+    # @param input [Time, Date, DateTime, nil]
+    # @param jd [Float, nil] Julian Date
+    # @param mjd [Float, nil] Modified Julian Date
+    # @param interpolation [Symbol, nil] +:lagrange+ or +:linear+
+    # @return [Entry]
+    # @raise [OutOfRangeError]
     def at(input = nil, jd: nil, mjd: nil, interpolation: nil)
       query_mjd = TimeScale.to_mjd(input, jd: jd, mjd: mjd)
       entries = Data.finals_entries
@@ -48,6 +60,9 @@ module IERS
       )
     end
 
+    # @param start_date [Date]
+    # @param end_date [Date]
+    # @return [Array<Entry>]
     def between(start_date, end_date)
       start_mjd = TimeScale.to_mjd(start_date)
       end_mjd = TimeScale.to_mjd(end_date)

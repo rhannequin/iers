@@ -1,9 +1,14 @@
 # frozen_string_literal: true
 
 module IERS
+  # @api private
   module Interpolation
     module_function
 
+    # @param xs [Array<Float>] x-coordinates (exactly 2)
+    # @param ys [Array<Float>] y-coordinates (exactly 2)
+    # @param x [Float] interpolation point
+    # @return [Float]
     def linear(xs, ys, x)
       unless xs.size == 2 && ys.size == 2
         raise ArgumentError, "linear interpolation requires exactly 2 points"
@@ -15,6 +20,10 @@ module IERS
       (y0 + t * (y1 - y0)).to_f
     end
 
+    # @param xs [Array<Float>] x-coordinates
+    # @param ys [Array<Float>] y-coordinates
+    # @param x [Float] interpolation point
+    # @return [Float]
     def lagrange(xs, ys, x)
       n = xs.size
 

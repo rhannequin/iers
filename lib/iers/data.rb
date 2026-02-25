@@ -9,6 +9,8 @@ module IERS
 
     module_function
 
+    # @param sources [Array<Symbol>] data sources to update (default: all)
+    # @return [UpdateResult]
     def update!(*sources)
       config = IERS.configuration
       sources = config.sources.keys if sources.empty?
@@ -32,6 +34,7 @@ module IERS
       UpdateResult.new(updated_files: updated, errors: errors)
     end
 
+    # @return [DataStatus]
     def status
       config = IERS.configuration
 
@@ -45,6 +48,7 @@ module IERS
       end
     end
 
+    # @return [void]
     def clear_cache!
       config = IERS.configuration
 
@@ -54,11 +58,13 @@ module IERS
       end
     end
 
+    # @return [Array<Parsers::Finals::Entry>]
     def finals_entries
       path = resolve_path(:finals)
       Parsers::Finals.parse(path)
     end
 
+    # @return [Array<Parsers::LeapSecond::Entry>]
     def leap_second_entries
       path = resolve_path(:leap_seconds)
       Parsers::LeapSecond.parse(path)

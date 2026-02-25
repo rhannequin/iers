@@ -2,11 +2,16 @@
 
 module IERS
   module UT1
+    # @attr ut1_utc [Float] UT1−UTC in seconds
+    # @attr mjd [Float] Modified Julian Date of the query
+    # @attr data_quality [Symbol] +:observed+ or +:predicted+
     Entry = ::Data.define(:ut1_utc, :mjd, :data_quality) do
+      # @return [Boolean]
       def observed?
         data_quality == :observed
       end
 
+      # @return [Boolean]
       def predicted?
         data_quality == :predicted
       end
@@ -17,6 +22,12 @@ module IERS
 
     module_function
 
+    # @param input [Time, Date, DateTime, nil]
+    # @param jd [Float, nil] Julian Date
+    # @param mjd [Float, nil] Modified Julian Date
+    # @param interpolation [Symbol, nil] +:lagrange+ or +:linear+
+    # @return [Float] UT1−UTC in seconds
+    # @raise [OutOfRangeError]
     def at(input = nil, jd: nil, mjd: nil, interpolation: nil)
       detailed_at(
         input,
@@ -26,6 +37,12 @@ module IERS
       ).ut1_utc
     end
 
+    # @param input [Time, Date, DateTime, nil]
+    # @param jd [Float, nil] Julian Date
+    # @param mjd [Float, nil] Modified Julian Date
+    # @param interpolation [Symbol, nil] +:lagrange+ or +:linear+
+    # @return [Entry]
+    # @raise [OutOfRangeError]
     def detailed_at(input = nil, jd: nil, mjd: nil, interpolation: nil)
       query_mjd = TimeScale.to_mjd(input, jd: jd, mjd: mjd)
       entries = Data.finals_entries
@@ -62,6 +79,9 @@ module IERS
       )
     end
 
+    # @param start_date [Date]
+    # @param end_date [Date]
+    # @return [Array<Entry>]
     def between(start_date, end_date)
       start_mjd = TimeScale.to_mjd(start_date)
       end_mjd = TimeScale.to_mjd(end_date)

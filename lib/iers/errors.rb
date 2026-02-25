@@ -6,7 +6,10 @@ module IERS
   class DataError < Error; end
 
   class ParseError < DataError
-    attr_reader :path, :line_number
+    # @return [Pathname, nil]
+    attr_reader :path
+    # @return [Integer, nil]
+    attr_reader :line_number
 
     def initialize(message = nil, path: nil, line_number: nil)
       @path = path
@@ -16,6 +19,7 @@ module IERS
   end
 
   class FileNotFoundError < DataError
+    # @return [Pathname, nil]
     attr_reader :path
 
     def initialize(message = nil, path: nil)
@@ -27,7 +31,10 @@ module IERS
   class DownloadError < Error; end
 
   class NetworkError < DownloadError
-    attr_reader :url, :status_code
+    # @return [String, nil]
+    attr_reader :url
+    # @return [Integer, nil]
+    attr_reader :status_code
 
     def initialize(message = nil, url: nil, status_code: nil)
       @url = url
@@ -37,7 +44,10 @@ module IERS
   end
 
   class ValidationError < DownloadError
-    attr_reader :path, :reason
+    # @return [Pathname, nil]
+    attr_reader :path
+    # @return [String, nil]
+    attr_reader :reason
 
     def initialize(message = nil, path: nil, reason: nil)
       @path = path
@@ -49,7 +59,10 @@ module IERS
   class ConfigurationError < Error; end
 
   class OutOfRangeError < Error
-    attr_reader :requested_mjd, :available_range
+    # @return [Float, nil]
+    attr_reader :requested_mjd
+    # @return [Range<Float>, nil]
+    attr_reader :available_range
 
     def initialize(message = nil, requested_mjd: nil, available_range: nil)
       @requested_mjd = requested_mjd
