@@ -93,19 +93,24 @@ module IERS
 
     def interpolate_ut1(window, query_mjd, method)
       xs = window.map(&:mjd)
-      tai_utc_at_query = LeapSecond.at(mjd: query_mjd)
+      leap_entries = Data.leap_second_entries
+
+      tai_utc_at_query = tai_utc_for(leap_entries, query_mjd)
       ys = window.map do |e|
-        best_ut1_utc(e) - LeapSecond.at(mjd: e.mjd)
+        best_ut1_utc(e) - tai_utc_for(leap_entries, e.mjd)
       end
 
       ut1_tai = case method
-      when :lagrange
-        Interpolation.lagrange(xs, ys, query_mjd)
-      when :linear
-        Interpolation.linear(xs, ys, query_mjd)
+      when :lagrange then Interpolation.lagrange(xs, ys, query_mjd)
+      when :linear then Interpolation.linear(xs, ys, query_mjd)
       end
 
       ut1_tai + tai_utc_at_query
+    end
+
+    def tai_utc_for(entries, mjd)
+      index = entries.bsearch_index { |e| e.mjd > mjd }
+      index.nil? ? entries.last.tai_utc : entries[index - 1].tai_utc
     end
 
     def best_ut1_utc(entry)
@@ -121,6 +126,7 @@ module IERS
     end
 
     private_class_method :interpolate_ut1,
+      :tai_utc_for,
       :best_ut1_utc,
       :derive_quality
   end
