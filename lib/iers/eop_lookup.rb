@@ -24,6 +24,16 @@ module IERS
     end
 
     # @param entries [Array] sorted finals entries
+    # @param start_mjd [Float]
+    # @param end_mjd [Float]
+    # @return [Array] entries within the MJD range (inclusive)
+    def range(entries, start_mjd, end_mjd)
+      first = entries.bsearch_index { |e| e.mjd >= start_mjd } || entries.size
+      last = entries.bsearch_index { |e| e.mjd > end_mjd } || entries.size
+      entries[first...last]
+    end
+
+    # @param entries [Array] sorted finals entries
     # @param mjd [Float]
     # @return [Array] two-element array bracketing the query point
     # @raise [OutOfRangeError]

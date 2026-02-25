@@ -86,8 +86,8 @@ module IERS
       end_mjd = TimeScale.to_mjd(end_date)
       entries = Data.finals_entries
 
-      entries
-        .select { |e| e.mjd.between?(start_mjd, end_mjd) }
+      EopLookup
+        .range(entries, start_mjd, end_mjd)
         .map do |e|
           Entry.new(
             length_of_day: e.lod / 1000.0,
