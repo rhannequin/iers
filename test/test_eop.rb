@@ -187,3 +187,116 @@ class TestEOPDataQuality < Minitest::Test
     assert_predicate result, :predicted?
   end
 end
+
+class TestEOPBetween < Minitest::Test
+  def setup
+    IERS.configure do |config|
+      config.finals_path = fixture_path("finals_10_days.dat")
+      config.leap_second_path = fixture_path("leap_second_query.dat")
+    end
+  end
+
+  def teardown
+    IERS.reset_configuration!
+  end
+
+  def fixture_path(name)
+    Pathname(__dir__).join("fixtures", name)
+  end
+
+  def test_returns_array_of_entries
+    results = IERS::EOP.between(
+      Date.new(1973, 1, 3),
+      Date.new(1973, 1, 5)
+    )
+
+    assert_instance_of IERS::EOP::Entry, results.first
+  end
+
+  def test_correct_count_for_date_range
+    results = IERS::EOP.between(
+      Date.new(1973, 1, 3),
+      Date.new(1973, 1, 7)
+    )
+
+    assert_equal 5, results.size
+  end
+
+  def test_first_entry_mjd
+    results = IERS::EOP.between(
+      Date.new(1973, 1, 3),
+      Date.new(1973, 1, 7)
+    )
+
+    assert_in_delta 41685.0, results.first.mjd
+  end
+
+  def test_last_entry_mjd
+    results = IERS::EOP.between(
+      Date.new(1973, 1, 3),
+      Date.new(1973, 1, 7)
+    )
+
+    assert_in_delta 41689.0, results.last.mjd
+  end
+
+  def test_entries_have_all_components
+    results = IERS::EOP.between(
+      Date.new(1973, 1, 3),
+      Date.new(1973, 1, 5)
+    )
+    entry = results.first
+
+    assert_instance_of Float, entry.polar_motion_x
+    assert_instance_of Float, entry.polar_motion_y
+    assert_instance_of Float, entry.ut1_utc
+    assert_instance_of Float, entry.length_of_day
+    assert_instance_of Float, entry.celestial_pole_x
+    assert_instance_of Float, entry.celestial_pole_y
+  end
+
+  def test_entries_have_data_quality
+    results = IERS::EOP.between(
+      Date.new(1973, 1, 3),
+      Date.new(1973, 1, 5)
+    )
+
+    assert_includes [:observed, :predicted], results.first.data_quality
+  end
+
+  def test_empty_array_for_out_of_data_range
+    results = IERS::EOP.between(
+      Date.new(1980, 1, 1),
+      Date.new(1980, 1, 5)
+    )
+
+    assert_empty results
+  end
+
+  def test_single_day_range
+    results = IERS::EOP.between(
+      Date.new(1973, 1, 5),
+      Date.new(1973, 1, 5)
+    )
+
+    assert_equal 1, results.size
+  end
+
+  def test_returns_frozen_array
+    results = IERS::EOP.between(
+      Date.new(1973, 1, 3),
+      Date.new(1973, 1, 5)
+    )
+
+    assert_predicate results, :frozen?
+  end
+
+  def test_uses_bulletin_b_values
+    results = IERS::EOP.between(
+      Date.new(1973, 1, 2),
+      Date.new(1973, 1, 2)
+    )
+
+    assert_in_delta 0.143, results.first.polar_motion_x, 1e-3
+  end
+end

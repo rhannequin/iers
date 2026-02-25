@@ -65,5 +65,47 @@ module IERS
         data_quality: quality
       )
     end
+
+    # @param start_date [Date]
+    # @param end_date [Date]
+    # @return [Array<Entry>]
+    def between(start_date, end_date)
+      start_mjd = TimeScale.to_mjd(start_date)
+      end_mjd = TimeScale.to_mjd(end_date)
+      entries = Data.finals_entries
+
+      entries
+        .select { |e| e.mjd.between?(start_mjd, end_mjd) }
+        .map { |e| entry_from_parser(e) }
+        .freeze
+    end
+
+    def entry_from_parser(e)
+      Entry.new(
+        polar_motion_x: e.bulletin_b_pm_x || e.pm_x,
+        polar_motion_y: e.bulletin_b_pm_y || e.pm_y,
+        ut1_utc: e.bulletin_b_ut1_utc || e.ut1_utc,
+        length_of_day: e.lod / 1000.0,
+        celestial_pole_x: e.bulletin_b_dx || e.dx,
+        celestial_pole_y: e.bulletin_b_dy || e.dy,
+        mjd: e.mjd,
+        data_quality: derive_quality(e)
+      )
+    end
+
+    def derive_quality(entry)
+      flags = [
+        entry.pm_flag,
+        entry.ut1_flag,
+        entry.nutation_flag
+      ]
+      if flags.include?("P")
+        :predicted
+      else
+        :observed
+      end
+    end
+
+    private_class_method :entry_from_parser, :derive_quality
   end
 end
