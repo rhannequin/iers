@@ -14,5 +14,28 @@ module IERS
       t = (x - x0) / (x1 - x0)
       (y0 + t * (y1 - y0)).to_f
     end
+
+    def lagrange(xs, ys, x)
+      n = xs.size
+
+      unless n == ys.size
+        raise ArgumentError, "xs and ys must have the same size"
+      end
+
+      unless n >= 2
+        raise ArgumentError, "lagrange interpolation requires at least 2 points"
+      end
+
+      result = 0.0
+      n.times do |i|
+        basis = 1.0
+        n.times do |j|
+          next if i == j
+          basis *= (x - xs[j]) / (xs[i] - xs[j])
+        end
+        result += ys[i] * basis
+      end
+      result.to_f
+    end
   end
 end
