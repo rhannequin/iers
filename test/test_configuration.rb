@@ -78,4 +78,54 @@ class TestConfiguration < Minitest::Test
 
     assert_raises(IERS::ConfigurationError) { config.sources = "not a hash" }
   end
+
+  def test_default_interpolation_is_lagrange
+    config = IERS::Configuration.new
+
+    assert_equal :lagrange, config.interpolation
+  end
+
+  def test_interpolation_can_be_set_to_linear
+    config = IERS::Configuration.new
+    config.interpolation = :linear
+
+    assert_equal :linear, config.interpolation
+  end
+
+  def test_interpolation_rejects_unknown_method
+    config = IERS::Configuration.new
+
+    assert_raises(IERS::ConfigurationError) { config.interpolation = :cubic }
+  end
+
+  def test_default_lagrange_order_is_4
+    config = IERS::Configuration.new
+
+    assert_equal 4, config.lagrange_order
+  end
+
+  def test_lagrange_order_can_be_set_to_even_number
+    config = IERS::Configuration.new
+    config.lagrange_order = 6
+
+    assert_equal 6, config.lagrange_order
+  end
+
+  def test_lagrange_order_rejects_odd_number
+    config = IERS::Configuration.new
+
+    assert_raises(IERS::ConfigurationError) { config.lagrange_order = 3 }
+  end
+
+  def test_lagrange_order_rejects_zero
+    config = IERS::Configuration.new
+
+    assert_raises(IERS::ConfigurationError) { config.lagrange_order = 0 }
+  end
+
+  def test_lagrange_order_rejects_negative
+    config = IERS::Configuration.new
+
+    assert_raises(IERS::ConfigurationError) { config.lagrange_order = -2 }
+  end
 end
