@@ -17,19 +17,27 @@ module IERS
 
     module_function
 
-    def at(input = nil, jd: nil, mjd: nil)
-      detailed_at(input, jd: jd, mjd: mjd).ut1_utc
+    def at(input = nil, jd: nil, mjd: nil, interpolation: nil)
+      detailed_at(
+        input,
+        jd: jd,
+        mjd: mjd,
+        interpolation: interpolation
+      ).ut1_utc
     end
 
-    def detailed_at(input = nil, jd: nil, mjd: nil)
+    def detailed_at(input = nil, jd: nil, mjd: nil, interpolation: nil)
       query_mjd = TimeScale.to_mjd(input, jd: jd, mjd: mjd)
       entries = Data.finals_entries
-      config = IERS.configuration
+      method = interpolation || IERS.configuration.interpolation
 
-      case config.interpolation
+      case method
       when :lagrange
+        order = IERS.configuration.lagrange_order
         window = EopLookup.window(
-          entries, query_mjd, order: config.lagrange_order
+          entries,
+          query_mjd,
+          order: order
         )
         xs = window.map(&:mjd)
         ys = window.map(&:ut1_utc)

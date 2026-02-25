@@ -289,3 +289,85 @@ class TestUT1Between < Minitest::Test
     assert_predicate results, :frozen?
   end
 end
+
+class TestUT1InterpolationOverride < Minitest::Test
+  def setup
+    IERS.configure do |config|
+      config.finals_path = fixture_path("finals_10_days.dat")
+    end
+  end
+
+  def teardown
+    IERS.reset_configuration!
+  end
+
+  def fixture_path(name)
+    Pathname(__dir__).join("fixtures", name)
+  end
+
+  def test_linear_override_returns_float
+    result = IERS::UT1.at(mjd: 41687.5, interpolation: :linear)
+
+    assert_instance_of Float, result
+  end
+
+  def test_linear_and_lagrange_produce_distinct_results
+    linear = IERS::UT1.at(
+      mjd: 41687.5,
+      interpolation: :linear
+    )
+    lagrange = IERS::UT1.at(
+      mjd: 41687.5,
+      interpolation: :lagrange
+    )
+
+    refute_in_delta linear, lagrange, 1e-10
+  end
+
+  def test_override_does_not_mutate_global_config
+    IERS::UT1.at(mjd: 41687.5, interpolation: :linear)
+
+    assert_equal :lagrange, IERS.configuration.interpolation
+  end
+
+  def test_linear_at_midpoint_equals_average_of_neighbors
+    # MJD 41687 -> 0.79991, MJD 41688 -> 0.79702
+    expected = (0.79991 + 0.79702) / 2.0
+    result = IERS::UT1.at(
+      mjd: 41687.5,
+      interpolation: :linear
+    )
+
+    assert_in_delta expected, result
+  end
+
+  def test_detailed_at_accepts_override
+    result = IERS::UT1.detailed_at(
+      mjd: 41687.5,
+      interpolation: :linear
+    )
+
+    assert_instance_of IERS::UT1::Entry, result
+  end
+
+  def test_global_linear_config_works
+    IERS.configure { |c| c.interpolation = :linear }
+
+    expected = (0.79991 + 0.79702) / 2.0
+    result = IERS::UT1.at(mjd: 41687.5)
+
+    assert_in_delta expected, result
+  end
+
+  def test_global_linear_overridden_by_per_query_lagrange
+    IERS.configure { |c| c.interpolation = :linear }
+
+    linear = IERS::UT1.at(mjd: 41687.5)
+    lagrange = IERS::UT1.at(
+      mjd: 41687.5,
+      interpolation: :lagrange
+    )
+
+    refute_in_delta linear, lagrange, 1e-10
+  end
+end
