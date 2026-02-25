@@ -305,3 +305,58 @@ class TestLengthOfDayBetween < Minitest::Test
     assert_in_delta 0.0035563, results.first.length_of_day, 1e-7
   end
 end
+
+class TestLengthOfDayInterpolationOverride < Minitest::Test
+  def setup
+    IERS.configure do |config|
+      config.finals_path = fixture_path("finals_10_days.dat")
+      config.leap_second_path = fixture_path("leap_second_query.dat")
+    end
+  end
+
+  def teardown
+    IERS.reset_configuration!
+  end
+
+  def fixture_path(name)
+    Pathname(__dir__).join("fixtures", name)
+  end
+
+  def test_linear_override_returns_float
+    result = IERS::LengthOfDay.at(
+      mjd: 41687.5,
+      interpolation: :linear
+    )
+
+    assert_instance_of Float, result
+  end
+
+  def test_linear_at_midpoint_equals_average
+    # MJD 41687 lod=2.8000 ms, MJD 41688 lod=2.9000 ms
+    expected = (2.8000 + 2.9000) / 2.0 / 1000.0
+    result = IERS::LengthOfDay.at(
+      mjd: 41687.5,
+      interpolation: :linear
+    )
+
+    assert_in_delta expected, result, 1e-7
+  end
+
+  def test_detailed_linear_override_returns_entry
+    result = IERS::LengthOfDay.detailed_at(
+      mjd: 41687.5,
+      interpolation: :linear
+    )
+
+    assert_instance_of IERS::LengthOfDay::Entry, result
+  end
+
+  def test_override_does_not_mutate_global_config
+    IERS::LengthOfDay.at(
+      mjd: 41687.5,
+      interpolation: :linear
+    )
+
+    assert_equal :lagrange, IERS.configuration.interpolation
+  end
+end
