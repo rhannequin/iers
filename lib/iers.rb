@@ -14,6 +14,7 @@ require_relative "iers/eop_lookup"
 require_relative "iers/leap_second"
 require_relative "iers/ut1"
 require_relative "iers/polar_motion"
+require_relative "iers/celestial_pole_offset"
 
 module IERS
   class << self
