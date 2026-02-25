@@ -33,6 +33,7 @@ module IERS
 
         path.each_line.with_index(1) do |line, line_number|
           next if line.strip.empty?
+          next if no_eop_data?(line)
 
           entries << parse_line(line, path, line_number)
         end
@@ -105,7 +106,13 @@ module IERS
         raw.strip
       end
 
+      def no_eop_data?(line)
+        flag = line[16, 1]
+        flag.nil? || flag.strip.empty?
+      end
+
       private_class_method :parse_line,
+        :no_eop_data?,
         :parse_float,
         :parse_int,
         :parse_flag,

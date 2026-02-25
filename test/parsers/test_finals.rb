@@ -336,4 +336,16 @@ class TestFinalsParser < Minitest::Test
 
     refute_predicate entries, :empty?
   end
+
+  def test_skips_trailing_lines_with_no_eop_data
+    entries = IERS::Parsers::Finals
+      .parse(fixture_path("finals_trailing_blank.dat"))
+
+    assert_equal 3, entries.size
+  end
+
+  def test_trailing_blank_lines_do_not_cause_parse_error
+    IERS::Parsers::Finals
+      .parse(fixture_path("finals_trailing_blank.dat"))
+  end
 end
