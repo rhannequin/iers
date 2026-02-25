@@ -223,3 +223,115 @@ class TestPolarMotionDataQuality < Minitest::Test
     assert_in_delta 0.113721, result.x, 1e-4
   end
 end
+
+class TestPolarMotionBetween < Minitest::Test
+  def setup
+    IERS.configure do |config|
+      config.finals_path = fixture_path("finals_10_days.dat")
+      config.leap_second_path = fixture_path(
+        "leap_second_query.dat"
+      )
+    end
+  end
+
+  def teardown
+    IERS.reset_configuration!
+  end
+
+  def fixture_path(name)
+    Pathname(__dir__).join("fixtures", name)
+  end
+
+  def test_returns_array_of_entries
+    results = IERS::PolarMotion.between(
+      Date.new(1973, 1, 3),
+      Date.new(1973, 1, 5)
+    )
+
+    assert_instance_of IERS::PolarMotion::Entry,
+      results.first
+  end
+
+  def test_correct_count_for_date_range
+    results = IERS::PolarMotion.between(
+      Date.new(1973, 1, 3),
+      Date.new(1973, 1, 7)
+    )
+
+    assert_equal 5, results.size
+  end
+
+  def test_first_entry_mjd
+    results = IERS::PolarMotion.between(
+      Date.new(1973, 1, 3),
+      Date.new(1973, 1, 7)
+    )
+
+    assert_in_delta 41685.0, results.first.mjd
+  end
+
+  def test_last_entry_mjd
+    results = IERS::PolarMotion.between(
+      Date.new(1973, 1, 3),
+      Date.new(1973, 1, 7)
+    )
+
+    assert_in_delta 41689.0, results.last.mjd
+  end
+
+  def test_entries_have_x_and_y
+    results = IERS::PolarMotion.between(
+      Date.new(1973, 1, 3),
+      Date.new(1973, 1, 5)
+    )
+
+    assert_instance_of Float, results.first.x
+    assert_instance_of Float, results.first.y
+  end
+
+  def test_entries_have_data_quality
+    results = IERS::PolarMotion.between(
+      Date.new(1973, 1, 3),
+      Date.new(1973, 1, 5)
+    )
+
+    assert_equal :observed, results.first.data_quality
+  end
+
+  def test_empty_array_for_out_of_data_range
+    results = IERS::PolarMotion.between(
+      Date.new(1980, 1, 1),
+      Date.new(1980, 1, 5)
+    )
+
+    assert_empty results
+  end
+
+  def test_single_day_range
+    results = IERS::PolarMotion.between(
+      Date.new(1973, 1, 5),
+      Date.new(1973, 1, 5)
+    )
+
+    assert_equal 1, results.size
+  end
+
+  def test_returns_frozen_array
+    results = IERS::PolarMotion.between(
+      Date.new(1973, 1, 3),
+      Date.new(1973, 1, 5)
+    )
+
+    assert_predicate results, :frozen?
+  end
+
+  def test_between_uses_bulletin_b
+    results = IERS::PolarMotion.between(
+      Date.new(1973, 1, 2),
+      Date.new(1973, 1, 2)
+    )
+
+    assert_in_delta 0.143, results.first.x, 1e-4
+    assert_in_delta 0.137, results.first.y, 1e-4
+  end
+end
