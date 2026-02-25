@@ -335,3 +335,63 @@ class TestPolarMotionBetween < Minitest::Test
     assert_in_delta 0.137, results.first.y, 1e-4
   end
 end
+
+class TestPolarMotionInterpolationOverride < Minitest::Test
+  def setup
+    IERS.configure do |config|
+      config.finals_path = fixture_path("finals_10_days.dat")
+      config.leap_second_path = fixture_path(
+        "leap_second_query.dat"
+      )
+    end
+  end
+
+  def teardown
+    IERS.reset_configuration!
+  end
+
+  def fixture_path(name)
+    Pathname(__dir__).join("fixtures", name)
+  end
+
+  def test_linear_override_returns_entry
+    result = IERS::PolarMotion.at(
+      mjd: 41687.5,
+      interpolation: :linear
+    )
+
+    assert_instance_of IERS::PolarMotion::Entry, result
+  end
+
+  def test_linear_at_midpoint_x_equals_average
+    # MJD 41687 bb_pm_x=0.137, MJD 41688 bb_pm_x=0.135
+    expected = (0.137 + 0.135) / 2.0
+    result = IERS::PolarMotion.at(
+      mjd: 41687.5,
+      interpolation: :linear
+    )
+
+    assert_in_delta expected, result.x, 1e-6
+  end
+
+  def test_linear_at_midpoint_y_equals_average
+    # MJD 41687 bb_pm_y=0.128, MJD 41688 bb_pm_y=0.125
+    expected = (0.128 + 0.125) / 2.0
+    result = IERS::PolarMotion.at(
+      mjd: 41687.5,
+      interpolation: :linear
+    )
+
+    assert_in_delta expected, result.y, 1e-6
+  end
+
+  def test_override_does_not_mutate_global_config
+    IERS::PolarMotion.at(
+      mjd: 41687.5,
+      interpolation: :linear
+    )
+
+    assert_equal :lagrange,
+      IERS.configuration.interpolation
+  end
+end
