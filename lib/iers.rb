@@ -12,6 +12,7 @@ require_relative "iers/time_scale"
 require_relative "iers/interpolation"
 require_relative "iers/eop_lookup"
 require_relative "iers/leap_second"
+require_relative "iers/ut1"
 
 module IERS
   class << self
