@@ -7,7 +7,16 @@ module IERS
       leap_seconds: "Leap_Second.dat"
     }.freeze
 
+    @mutex = Mutex.new
+    @finals = nil
+    @leap_seconds = nil
+
     module_function
+
+    # @return [Boolean]
+    def loaded?
+      !@finals.nil? || !@leap_seconds.nil?
+    end
 
     # @param sources [Array<Symbol>] data sources to update (default: all)
     # @return [UpdateResult]
@@ -60,14 +69,22 @@ module IERS
 
     # @return [Array<Parsers::Finals::Entry>]
     def finals_entries
-      path = resolve_path(:finals)
-      Parsers::Finals.parse(path)
+      @mutex.synchronize do
+        @finals ||= begin
+          path = resolve_path(:finals)
+          Parsers::Finals.parse(path).freeze
+        end
+      end
     end
 
     # @return [Array<Parsers::LeapSecond::Entry>]
     def leap_second_entries
-      path = resolve_path(:leap_seconds)
-      Parsers::LeapSecond.parse(path)
+      @mutex.synchronize do
+        @leap_seconds ||= begin
+          path = resolve_path(:leap_seconds)
+          Parsers::LeapSecond.parse(path).freeze
+        end
+      end
     end
 
     def resolve_path(source, config = IERS.configuration)
@@ -106,6 +123,14 @@ module IERS
       return nil if mtimes.empty?
 
       (Time.now - mtimes.min).to_i
+    end
+
+    # @return [void]
+    def clear_loaded!
+      @mutex.synchronize do
+        @finals = nil
+        @leap_seconds = nil
+      end
     end
 
     private_class_method :resolve_path,

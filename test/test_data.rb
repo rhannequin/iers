@@ -332,3 +332,51 @@ class TestData < Minitest::Test
       .write("    41317.0    1  1 1972       10\n")
   end
 end
+
+class TestDataCaching < Minitest::Test
+  def setup
+    IERS.configure do |config|
+      config.finals_path = fixture_path("finals_10_days.dat")
+      config.leap_second_path = fixture_path("leap_second_query.dat")
+    end
+  end
+
+  def teardown
+    IERS.reset_configuration!
+  end
+
+  def fixture_path(name)
+    Pathname(__dir__).join("fixtures", name)
+  end
+
+  def test_finals_entries_returns_same_object
+    first = IERS::Data.finals_entries
+    second = IERS::Data.finals_entries
+
+    assert_same first, second
+  end
+
+  def test_leap_second_entries_returns_same_object
+    first = IERS::Data.leap_second_entries
+    second = IERS::Data.leap_second_entries
+
+    assert_same first, second
+  end
+
+  def test_loaded_is_false_initially
+    refute_predicate IERS::Data, :loaded?
+  end
+
+  def test_loaded_is_true_after_query
+    IERS::Data.finals_entries
+
+    assert_predicate IERS::Data, :loaded?
+  end
+
+  def test_reset_configuration_clears_loaded_cache
+    IERS::Data.finals_entries
+    IERS.reset_configuration!
+
+    refute_predicate IERS::Data, :loaded?
+  end
+end
