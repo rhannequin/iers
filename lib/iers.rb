@@ -38,6 +38,7 @@ module IERS
     def reset_configuration!
       @configuration = nil
       Data.clear_loaded!
+      LeapSecond.clear_cached!
     end
 
     # @return [void]
