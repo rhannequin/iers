@@ -111,6 +111,65 @@ entries = IERS::UT1.between(
 )
 ```
 
+### Celestial pole offsets
+
+Query the celestial pole offset corrections (dX, dY):
+
+```ruby
+cpo = IERS::CelestialPoleOffset.at(Time.utc(2020, 6, 15))
+cpo.x  # => dX correction (milliarcseconds)
+cpo.y  # => dY correction (milliarcseconds)
+```
+
+### Length of day
+
+Query the excess length of day:
+
+```ruby
+IERS::LengthOfDay.at(Time.utc(2020, 6, 15))  # => excess LOD (seconds)
+```
+
+For richer output, use `detailed_at`:
+
+```ruby
+entry = IERS::LengthOfDay.detailed_at(Time.utc(2020, 6, 15))
+entry.length_of_day  # => excess LOD (seconds)
+entry.observed?      # => true
+```
+
+### Delta T
+
+Compute Delta T (TT − UT1), available from 1972 onward:
+
+```ruby
+IERS::DeltaT.at(Time.utc(2020, 6, 15))  # => ~69.36 (seconds)
+```
+
+### Earth Orientation Parameters (unified)
+
+Query all EOP components at once:
+
+```ruby
+eop = IERS::EOP.at(Time.utc(2020, 6, 15))
+eop.polar_motion_x   # => arcseconds
+eop.polar_motion_y   # => arcseconds
+eop.ut1_utc          # => seconds
+eop.length_of_day    # => seconds
+eop.celestial_pole_x # => milliarcseconds
+eop.celestial_pole_y # => milliarcseconds
+eop.observed?        # => true
+eop.date             # => #<Date: 2020-06-15>
+```
+
+Retrieve daily EOP over a date range:
+
+```ruby
+entries = IERS::EOP.between(
+  Date.new(2020, 1, 1),
+  Date.new(2020, 1, 31)
+)
+```
+
 ### Leap seconds
 
 Look up TAI−UTC at a given date:
@@ -138,6 +197,43 @@ IERS::UT1.at(jd: 2458849.5)       # Julian Date
 IERS::UT1.at(Time.utc(2020, 1, 1)) # Ruby Time
 ```
 
+### Data freshness
+
+Check that predictions cover enough of the future before relying on
+query results:
+
+```ruby
+begin
+  IERS::Data.ensure_fresh!(coverage_days_ahead: 90)
+rescue IERS::StaleDataError => e
+  puts "Predictions end #{e.predicted_until}, need #{e.required_until}"
+  IERS::Data.update!
+end
+```
+
+Without `coverage_days_ahead`, the check ensures predictions cover today.
+
+### Data status and cache management
+
+```ruby
+status = IERS::Data.status
+status.cached?    # => true if downloaded data exists
+status.cache_age  # => age in seconds, or nil
+
+IERS::Data.clear_cache!  # remove downloaded files
+```
+
+### Custom data paths
+
+Point the gem at your own copies of the IERS data files:
+
+```ruby
+IERS.configure do |config|
+  config.finals_path = "/path/to/finals2000A.all"
+  config.leap_second_path = "/path/to/Leap_Second.dat"
+end
+```
+
 ### Configuration
 
 ```ruby
@@ -148,6 +244,22 @@ IERS.configure do |config|
   config.download_timeout = 60     # default: 30 (seconds)
 end
 ```
+
+To fully reset configuration and cached data:
+
+```ruby
+IERS.reset!
+```
+
+### Error handling
+
+All errors inherit from `IERS::Error`:
+
+- `IERS::OutOfRangeError` — query outside data coverage
+- `IERS::StaleDataError` — predictions don't extend far enough
+- `IERS::FileNotFoundError` — data file not downloaded yet
+- `IERS::NetworkError` — download failure
+- `IERS::ConfigurationError` — invalid configuration
 
 ## Development
 
