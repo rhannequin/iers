@@ -30,5 +30,40 @@ module IERS
         data_quality == :predicted
       end
     end
+
+    module_function
+
+    # @param input [Time, Date, DateTime, nil]
+    # @param jd [Float, nil] Julian Date
+    # @param mjd [Float, nil] Modified Julian Date
+    # @param interpolation [Symbol, nil] +:lagrange+ or +:linear+
+    # @return [Entry]
+    # @raise [OutOfRangeError]
+    def at(input = nil, jd: nil, mjd: nil, interpolation: nil)
+      query_mjd = TimeScale.to_mjd(input, jd: jd, mjd: mjd)
+      interp = interpolation ? {interpolation: interpolation} : {}
+
+      pm = PolarMotion.at(mjd: query_mjd, **interp)
+      ut1 = UT1.detailed_at(mjd: query_mjd, **interp)
+      cpo = CelestialPoleOffset.at(mjd: query_mjd, **interp)
+      lod = LengthOfDay.detailed_at(mjd: query_mjd, **interp)
+
+      quality = if [pm, ut1, cpo, lod].any?(&:predicted?)
+        :predicted
+      else
+        :observed
+      end
+
+      Entry.new(
+        polar_motion_x: pm.x,
+        polar_motion_y: pm.y,
+        ut1_utc: ut1.ut1_utc,
+        length_of_day: lod.length_of_day,
+        celestial_pole_x: cpo.x,
+        celestial_pole_y: cpo.y,
+        mjd: query_mjd,
+        data_quality: quality
+      )
+    end
   end
 end
