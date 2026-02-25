@@ -60,6 +60,26 @@ module IERS
       )
     end
 
+    # @param start_date [Date]
+    # @param end_date [Date]
+    # @return [Array<Entry>]
+    def between(start_date, end_date)
+      start_mjd = TimeScale.to_mjd(start_date)
+      end_mjd = TimeScale.to_mjd(end_date)
+      entries = Data.finals_entries
+
+      entries
+        .select { |e| e.mjd.between?(start_mjd, end_mjd) }
+        .map do |e|
+          Entry.new(
+            x: best_cpo(e, :x),
+            y: best_cpo(e, :y),
+            mjd: e.mjd,
+            data_quality: FLAG_TO_QUALITY.fetch(e.nutation_flag, :observed)
+          )
+        end.freeze
+    end
+
     def interpolate_cpo(window, query_mjd, method, component)
       xs = window.map(&:mjd)
       ys = window.map { |e| best_cpo(e, component) }
