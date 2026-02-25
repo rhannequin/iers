@@ -56,6 +56,19 @@ module IERS
     end
   end
 
+  class StaleDataError < DataError
+    # @return [Date, nil]
+    attr_reader :predicted_until
+    # @return [Date, nil]
+    attr_reader :required_until
+
+    def initialize(message = nil, predicted_until: nil, required_until: nil)
+      @predicted_until = predicted_until
+      @required_until = required_until
+      super(message)
+    end
+  end
+
   class ConfigurationError < Error; end
 
   class OutOfRangeError < Error

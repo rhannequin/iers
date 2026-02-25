@@ -99,4 +99,28 @@ class TestErrors < Minitest::Test
 
     assert_equal "out of range", err.message
   end
+
+  def test_stale_data_error_inherits_from_data_error
+    assert_operator IERS::StaleDataError, :<, IERS::DataError
+  end
+
+  def test_stale_data_error_has_predicted_until
+    err = IERS::StaleDataError.new(
+      "stale",
+      predicted_until: Date.new(2024, 1, 1),
+      required_until: Date.new(2025, 1, 1)
+    )
+
+    assert_equal Date.new(2024, 1, 1), err.predicted_until
+  end
+
+  def test_stale_data_error_has_required_until
+    err = IERS::StaleDataError.new(
+      "stale",
+      predicted_until: Date.new(2024, 1, 1),
+      required_until: Date.new(2025, 1, 1)
+    )
+
+    assert_equal Date.new(2025, 1, 1), err.required_until
+  end
 end
