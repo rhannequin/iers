@@ -40,13 +40,13 @@ module IERS
           order: order
         )
         xs = window.map(&:mjd)
-        ys = window.map(&:ut1_utc)
+        ys = window.map { |e| best_ut1_utc(e) }
         ut1_utc = Interpolation.lagrange(xs, ys, query_mjd)
         quality = derive_quality(window)
       when :linear
         bracket = EopLookup.bracket(entries, query_mjd)
         xs = bracket.map(&:mjd)
-        ys = bracket.map(&:ut1_utc)
+        ys = bracket.map { |e| best_ut1_utc(e) }
         ut1_utc = Interpolation.linear(xs, ys, query_mjd)
         quality = derive_quality(bracket)
       end
@@ -67,11 +67,15 @@ module IERS
         .select { |e| e.mjd.between?(start_mjd, end_mjd) }
         .map do |e|
           Entry.new(
-            ut1_utc: e.ut1_utc,
+            ut1_utc: best_ut1_utc(e),
             mjd: e.mjd,
             data_quality: FLAG_TO_QUALITY.fetch(e.ut1_flag, :observed)
           )
         end.freeze
+    end
+
+    def best_ut1_utc(entry)
+      entry.bulletin_b_ut1_utc || entry.ut1_utc
     end
 
     def derive_quality(window_entries)
@@ -82,6 +86,6 @@ module IERS
       end
     end
 
-    private_class_method :derive_quality
+    private_class_method :best_ut1_utc, :derive_quality
   end
 end

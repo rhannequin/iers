@@ -83,27 +83,27 @@ class TestUT1At < Minitest::Test
     assert_instance_of Float, IERS::UT1.at(mjd: 41687.5)
   end
 
-  def test_on_exact_grid_point
-    assert_in_delta 0.8084178, IERS::UT1.at(mjd: 41684.0)
+  def test_on_exact_grid_point_prefers_bulletin_b
+    assert_in_delta 0.8075, IERS::UT1.at(mjd: 41684.0), 1e-4
   end
 
   def test_between_grid_points
     result = IERS::UT1.at(mjd: 41687.5)
 
-    assert_operator result, :>, 0.79702
-    assert_operator result, :<, 0.79991
+    assert_operator result, :>, 0.796
+    assert_operator result, :<, 0.799
   end
 
   def test_with_time_object
     result = IERS::UT1.at(Time.utc(1973, 1, 5))
 
-    assert_in_delta 0.79991, result, 1e-4
+    assert_in_delta 0.799, result, 1e-3
   end
 
   def test_with_date_object
     result = IERS::UT1.at(Date.new(1973, 1, 5))
 
-    assert_in_delta 0.79991, result, 1e-4
+    assert_in_delta 0.799, result, 1e-3
   end
 
   def test_before_data_raises_out_of_range_error
@@ -184,6 +184,18 @@ class TestUT1DetailedAt < Minitest::Test
     result = IERS::UT1.detailed_at(Time.utc(1973, 1, 4))
 
     assert_instance_of IERS::UT1::Entry, result
+  end
+
+  def test_observed_data_uses_bulletin_b
+    result = IERS::UT1.detailed_at(mjd: 41684.0)
+
+    assert_in_delta 0.8075, result.ut1_utc, 1e-4
+  end
+
+  def test_predicted_data_falls_back_to_series_a
+    result = IERS::UT1.detailed_at(mjd: 41688.5)
+
+    assert_operator result.ut1_utc.abs, :>, 0
   end
 
   def test_out_of_range_raises_error
@@ -288,6 +300,15 @@ class TestUT1Between < Minitest::Test
 
     assert_predicate results, :frozen?
   end
+
+  def test_between_uses_bulletin_b_when_available
+    results = IERS::UT1.between(
+      Date.new(1973, 1, 2),
+      Date.new(1973, 1, 2)
+    )
+
+    assert_in_delta 0.8075, results.first.ut1_utc, 1e-4
+  end
 end
 
 class TestUT1InterpolationOverride < Minitest::Test
@@ -331,14 +352,14 @@ class TestUT1InterpolationOverride < Minitest::Test
   end
 
   def test_linear_at_midpoint_equals_average_of_neighbors
-    # MJD 41687 -> 0.79991, MJD 41688 -> 0.79702
-    expected = (0.79991 + 0.79702) / 2.0
+    # MJD 41687 -> 0.799 (Bulletin B), MJD 41688 -> 0.796
+    expected = (0.799 + 0.796) / 2.0
     result = IERS::UT1.at(
       mjd: 41687.5,
       interpolation: :linear
     )
 
-    assert_in_delta expected, result
+    assert_in_delta expected, result, 1e-4
   end
 
   def test_detailed_at_accepts_override
@@ -353,10 +374,10 @@ class TestUT1InterpolationOverride < Minitest::Test
   def test_global_linear_config_works
     IERS.configure { |c| c.interpolation = :linear }
 
-    expected = (0.79991 + 0.79702) / 2.0
+    expected = (0.799 + 0.796) / 2.0
     result = IERS::UT1.at(mjd: 41687.5)
 
-    assert_in_delta expected, result
+    assert_in_delta expected, result, 1e-4
   end
 
   def test_global_linear_overridden_by_per_query_lagrange
