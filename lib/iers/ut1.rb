@@ -7,16 +7,7 @@ module IERS
     # @attr data_quality [Symbol] +:observed+ or +:predicted+
     Entry = ::Data.define(:ut1_utc, :mjd, :data_quality) do
       include HasDate
-
-      # @return [Boolean]
-      def observed?
-        data_quality == :observed
-      end
-
-      # @return [Boolean]
-      def predicted?
-        data_quality == :predicted
-      end
+      include HasDataQuality
     end
 
     FLAG_TO_QUALITY = {"I" => :observed, "P" => :predicted}.freeze

@@ -21,16 +21,7 @@ module IERS
       :data_quality
     ) do
       include HasDate
-
-      # @return [Boolean]
-      def observed?
-        data_quality == :observed
-      end
-
-      # @return [Boolean]
-      def predicted?
-        data_quality == :predicted
-      end
+      include HasDataQuality
     end
 
     module_function
