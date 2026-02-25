@@ -39,15 +39,19 @@ module IERS
           query_mjd,
           order: order
         )
-        xs = window.map(&:mjd)
-        ys = window.map { |e| best_ut1_utc(e) }
-        ut1_utc = Interpolation.lagrange(xs, ys, query_mjd)
+        ut1_utc = interpolate_ut1(
+          window,
+          query_mjd,
+          :lagrange
+        )
         quality = derive_quality(window)
       when :linear
         bracket = EopLookup.bracket(entries, query_mjd)
-        xs = bracket.map(&:mjd)
-        ys = bracket.map { |e| best_ut1_utc(e) }
-        ut1_utc = Interpolation.linear(xs, ys, query_mjd)
+        ut1_utc = interpolate_ut1(
+          bracket,
+          query_mjd,
+          :linear
+        )
         quality = derive_quality(bracket)
       end
 
@@ -74,6 +78,23 @@ module IERS
         end.freeze
     end
 
+    def interpolate_ut1(window, query_mjd, method)
+      xs = window.map(&:mjd)
+      tai_utc_at_query = LeapSecond.at(mjd: query_mjd)
+      ys = window.map do |e|
+        best_ut1_utc(e) - LeapSecond.at(mjd: e.mjd)
+      end
+
+      ut1_tai = case method
+      when :lagrange
+        Interpolation.lagrange(xs, ys, query_mjd)
+      when :linear
+        Interpolation.linear(xs, ys, query_mjd)
+      end
+
+      ut1_tai + tai_utc_at_query
+    end
+
     def best_ut1_utc(entry)
       entry.bulletin_b_ut1_utc || entry.ut1_utc
     end
@@ -86,6 +107,8 @@ module IERS
       end
     end
 
-    private_class_method :best_ut1_utc, :derive_quality
+    private_class_method :interpolate_ut1,
+      :best_ut1_utc,
+      :derive_quality
   end
 end

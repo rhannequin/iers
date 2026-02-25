@@ -68,6 +68,7 @@ class TestUT1At < Minitest::Test
   def setup
     IERS.configure do |config|
       config.finals_path = fixture_path("finals_10_days.dat")
+      config.leap_second_path = fixture_path("leap_second_query.dat")
     end
   end
 
@@ -126,6 +127,7 @@ class TestUT1DetailedAt < Minitest::Test
   def setup
     IERS.configure do |config|
       config.finals_path = fixture_path("finals_mixed_ip.dat")
+      config.leap_second_path = fixture_path("leap_second_query.dat")
     end
   end
 
@@ -209,6 +211,7 @@ class TestUT1Between < Minitest::Test
   def setup
     IERS.configure do |config|
       config.finals_path = fixture_path("finals_10_days.dat")
+      config.leap_second_path = fixture_path("leap_second_query.dat")
     end
   end
 
@@ -315,6 +318,7 @@ class TestUT1InterpolationOverride < Minitest::Test
   def setup
     IERS.configure do |config|
       config.finals_path = fixture_path("finals_10_days.dat")
+      config.leap_second_path = fixture_path("leap_second_query.dat")
     end
   end
 
@@ -390,5 +394,59 @@ class TestUT1InterpolationOverride < Minitest::Test
     )
 
     refute_in_delta linear, lagrange, 1e-10
+  end
+end
+
+class TestUT1LeapSecondBoundary < Minitest::Test
+  def setup
+    IERS.configure do |config|
+      config.finals_path = fixture_path(
+        "finals_leap_boundary.dat"
+      )
+      config.leap_second_path = fixture_path(
+        "leap_second_query.dat"
+      )
+    end
+  end
+
+  def teardown
+    IERS.reset_configuration!
+  end
+
+  def fixture_path(name)
+    Pathname(__dir__).join("fixtures", name)
+  end
+
+  def test_midpoint_across_leap_second_is_negative
+    result = IERS::UT1.at(mjd: 57753.5)
+
+    assert_operator result, :<, 0
+  end
+
+  def test_midpoint_matches_smooth_interpolation
+    result = IERS::UT1.at(mjd: 57753.5)
+
+    assert_in_delta(-0.4082, result, 1e-3)
+  end
+
+  def test_exact_grid_after_leap_returns_tabulated_value
+    result = IERS::UT1.at(mjd: 57754.0)
+
+    assert_in_delta 0.5912821, result, 1e-4
+  end
+
+  def test_away_from_boundary_still_works
+    result = IERS::UT1.at(mjd: 57752.5)
+
+    assert_in_delta(-0.4065, result, 1e-3)
+  end
+
+  def test_linear_across_leap_second_boundary
+    result = IERS::UT1.at(
+      mjd: 57753.5,
+      interpolation: :linear
+    )
+
+    assert_in_delta(-0.408, result, 1e-2)
   end
 end
