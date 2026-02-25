@@ -13,6 +13,7 @@ require_relative "iers/interpolation"
 require_relative "iers/eop_lookup"
 require_relative "iers/leap_second"
 require_relative "iers/ut1"
+require_relative "iers/polar_motion"
 
 module IERS
   class << self
