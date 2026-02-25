@@ -380,3 +380,50 @@ class TestDataCaching < Minitest::Test
     refute_predicate IERS::Data, :loaded?
   end
 end
+
+class TestEnsureFresh < Minitest::Test
+  def setup
+    IERS.configure do |config|
+      config.finals_path = fixture_path("finals_10_days.dat")
+      config.leap_second_path = fixture_path("leap_second_query.dat")
+    end
+  end
+
+  def teardown
+    IERS.reset_configuration!
+  end
+
+  def fixture_path(name)
+    Pathname(__dir__).join("fixtures", name)
+  end
+
+  def test_raises_stale_data_error_when_stale
+    assert_raises(IERS::StaleDataError) do
+      IERS::Data.ensure_fresh!
+    end
+  end
+
+  def test_error_has_predicted_until
+    err = assert_raises(IERS::StaleDataError) do
+      IERS::Data.ensure_fresh!
+    end
+
+    assert_equal Date.new(1973, 1, 11), err.predicted_until
+  end
+
+  def test_error_has_required_until
+    err = assert_raises(IERS::StaleDataError) do
+      IERS::Data.ensure_fresh!
+    end
+
+    assert_equal Date.today, err.required_until
+  end
+
+  def test_coverage_days_ahead_shifts_required_until
+    err = assert_raises(IERS::StaleDataError) do
+      IERS::Data.ensure_fresh!(coverage_days_ahead: 90)
+    end
+
+    assert_equal Date.today + 90, err.required_until
+  end
+end

@@ -67,6 +67,23 @@ module IERS
       end
     end
 
+    # @param coverage_days_ahead [Integer, nil]
+    # @return [void]
+    # @raise [StaleDataError]
+    def ensure_fresh!(coverage_days_ahead: nil)
+      predicted_until = finals_entries.last.date
+      required_until = Date.today + (coverage_days_ahead || 0)
+
+      return if predicted_until >= required_until
+
+      raise StaleDataError.new(
+        "Predictions only extend to #{predicted_until} " \
+        "but coverage through #{required_until} is required",
+        predicted_until: predicted_until,
+        required_until: required_until
+      )
+    end
+
     # @return [Array<Parsers::Finals::Entry>]
     def finals_entries
       @mutex.synchronize do
