@@ -5,30 +5,30 @@ require "test_helper"
 class TestCelestialPoleOffsetEntry < Minitest::Test
   def test_has_x
     entry = IERS::CelestialPoleOffset::Entry.new(
-      x: -18.637,
-      y: -3.667,
+      x: -0.766,
+      y: -0.720,
       mjd: 41684.0,
       data_quality: :observed
     )
 
-    assert_in_delta(-18.637, entry.x)
+    assert_in_delta(-0.766, entry.x)
   end
 
   def test_has_y
     entry = IERS::CelestialPoleOffset::Entry.new(
-      x: -18.637,
-      y: -3.667,
+      x: -0.766,
+      y: -0.720,
       mjd: 41684.0,
       data_quality: :observed
     )
 
-    assert_in_delta(-3.667, entry.y)
+    assert_in_delta(-0.720, entry.y)
   end
 
   def test_has_mjd
     entry = IERS::CelestialPoleOffset::Entry.new(
-      x: -18.637,
-      y: -3.667,
+      x: -0.766,
+      y: -0.720,
       mjd: 41684.0,
       data_quality: :observed
     )
@@ -38,8 +38,8 @@ class TestCelestialPoleOffsetEntry < Minitest::Test
 
   def test_has_data_quality
     entry = IERS::CelestialPoleOffset::Entry.new(
-      x: -18.637,
-      y: -3.667,
+      x: -0.766,
+      y: -0.720,
       mjd: 41684.0,
       data_quality: :observed
     )
@@ -49,8 +49,8 @@ class TestCelestialPoleOffsetEntry < Minitest::Test
 
   def test_observed_predicate
     entry = IERS::CelestialPoleOffset::Entry.new(
-      x: -18.637,
-      y: -3.667,
+      x: -0.766,
+      y: -0.720,
       mjd: 41684.0,
       data_quality: :observed
     )
@@ -60,8 +60,8 @@ class TestCelestialPoleOffsetEntry < Minitest::Test
 
   def test_predicted_predicate
     entry = IERS::CelestialPoleOffset::Entry.new(
-      x: -18.637,
-      y: -3.667,
+      x: -0.766,
+      y: -0.720,
       mjd: 41684.0,
       data_quality: :predicted
     )
@@ -71,8 +71,8 @@ class TestCelestialPoleOffsetEntry < Minitest::Test
 
   def test_date_returns_date
     entry = IERS::CelestialPoleOffset::Entry.new(
-      x: -18.637,
-      y: -3.667,
+      x: -0.766,
+      y: -0.720,
       mjd: 41684.0,
       data_quality: :observed
     )
@@ -82,8 +82,8 @@ class TestCelestialPoleOffsetEntry < Minitest::Test
 
   def test_is_frozen
     entry = IERS::CelestialPoleOffset::Entry.new(
-      x: -18.637,
-      y: -3.667,
+      x: -0.766,
+      y: -0.720,
       mjd: 41684.0,
       data_quality: :observed
     )
@@ -134,40 +134,40 @@ class TestCelestialPoleOffsetAt < Minitest::Test
     assert_in_delta 41687.5, result.mjd
   end
 
-  def test_on_exact_grid_point_prefers_bulletin_b_x
+  def test_on_exact_grid_point_x
     result = IERS::CelestialPoleOffset.at(mjd: 41684.0)
 
-    assert_in_delta(-18.637, result.x, 1e-4)
+    assert_in_delta(-0.766, result.x, 1e-4)
   end
 
-  def test_on_exact_grid_point_prefers_bulletin_b_y
+  def test_on_exact_grid_point_y
     result = IERS::CelestialPoleOffset.at(mjd: 41684.0)
 
-    assert_in_delta(-3.667, result.y, 1e-4)
+    assert_in_delta(-0.720, result.y, 1e-4)
   end
 
   def test_between_grid_points_x
     result = IERS::CelestialPoleOffset.at(mjd: 41687.5)
 
-    assert_in_delta(-18.715, result.x, 0.1)
+    assert_in_delta(-0.718, result.x, 0.1)
   end
 
   def test_between_grid_points_y
     result = IERS::CelestialPoleOffset.at(mjd: 41687.5)
 
-    assert_in_delta(-3.665, result.y, 0.1)
+    assert_in_delta(-0.633, result.y, 0.1)
   end
 
   def test_with_time_object
     result = IERS::CelestialPoleOffset.at(Time.utc(1973, 1, 5))
 
-    assert_in_delta(-18.700, result.x, 0.1)
+    assert_in_delta(-0.725, result.x, 0.1)
   end
 
   def test_with_date_object
     result = IERS::CelestialPoleOffset.at(Date.new(1973, 1, 5))
 
-    assert_in_delta(-3.650, result.y, 0.1)
+    assert_in_delta(-0.643, result.y, 0.1)
   end
 
   def test_before_data_raises_out_of_range_error
@@ -224,13 +224,13 @@ class TestCelestialPoleOffsetDataQuality < Minitest::Test
     assert_predicate result, :predicted?
   end
 
-  def test_observed_uses_bulletin_b_x
+  def test_observed_uses_series_a_x
     result = IERS::CelestialPoleOffset.at(mjd: 41684.0)
 
-    assert_in_delta(-18.637, result.x, 1e-4)
+    assert_in_delta(-0.766, result.x, 1e-4)
   end
 
-  def test_predicted_falls_back_to_series_a
+  def test_predicted_uses_series_a_x
     result = IERS::CelestialPoleOffset.at(mjd: 41688.0)
 
     assert_in_delta(-0.712, result.x, 1e-4)
@@ -337,14 +337,14 @@ class TestCelestialPoleOffsetBetween < Minitest::Test
     assert_predicate results, :frozen?
   end
 
-  def test_between_uses_bulletin_b
+  def test_between_uses_series_a
     results = IERS::CelestialPoleOffset.between(
       Date.new(1973, 1, 2),
       Date.new(1973, 1, 2)
     )
 
-    assert_in_delta(-18.637, results.first.x, 1e-4)
-    assert_in_delta(-3.667, results.first.y, 1e-4)
+    assert_in_delta(-0.766, results.first.x, 1e-4)
+    assert_in_delta(-0.720, results.first.y, 1e-4)
   end
 end
 
@@ -374,8 +374,8 @@ class TestCelestialPoleOffsetInterpolationOverride < Minitest::Test
   end
 
   def test_linear_at_midpoint_x_equals_average
-    # MJD 41687 bb_dx=-18.700, MJD 41688 bb_dx=-18.730
-    expected = (-18.700 + -18.730) / 2.0
+    # MJD 41687 dx=-0.725, MJD 41688 dx=-0.712
+    expected = (-0.725 + -0.712) / 2.0
     result = IERS::CelestialPoleOffset.at(
       mjd: 41687.5,
       interpolation: :linear
@@ -385,8 +385,8 @@ class TestCelestialPoleOffsetInterpolationOverride < Minitest::Test
   end
 
   def test_linear_at_midpoint_y_equals_average
-    # MJD 41687 bb_dy=-3.650, MJD 41688 bb_dy=-3.680
-    expected = (-3.650 + -3.680) / 2.0
+    # MJD 41687 dy=-0.643, MJD 41688 dy=-0.624
+    expected = (-0.643 + -0.624) / 2.0
     result = IERS::CelestialPoleOffset.at(
       mjd: 41687.5,
       interpolation: :linear

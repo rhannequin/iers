@@ -79,8 +79,8 @@ module IERS
         polar_motion_y: e.bulletin_b_pm_y || e.pm_y,
         ut1_utc: e.bulletin_b_ut1_utc || e.ut1_utc,
         length_of_day: e.lod / 1000.0,
-        celestial_pole_x: e.bulletin_b_dx || e.dx,
-        celestial_pole_y: e.bulletin_b_dy || e.dy,
+        celestial_pole_x: e.dx,
+        celestial_pole_y: e.dy,
         mjd: e.mjd,
         data_quality: derive_quality(e)
       )

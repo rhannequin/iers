@@ -65,8 +65,8 @@ module IERS
         .select { |e| e.mjd.between?(start_mjd, end_mjd) }
         .map do |e|
           Entry.new(
-            x: best_cpo(e, :x),
-            y: best_cpo(e, :y),
+            x: e.dx,
+            y: e.dy,
             mjd: e.mjd,
             data_quality: FLAG_TO_QUALITY.fetch(e.nutation_flag, :observed)
           )
@@ -75,22 +75,13 @@ module IERS
 
     def interpolate_cpo(window, query_mjd, method, component)
       xs = window.map(&:mjd)
-      ys = window.map { |e| best_cpo(e, component) }
+      ys = window.map { |e| (component == :x) ? e.dx : e.dy }
 
       case method
       when :lagrange
         Interpolation.lagrange(xs, ys, query_mjd)
       when :linear
         Interpolation.linear(xs, ys, query_mjd)
-      end
-    end
-
-    def best_cpo(entry, component)
-      case component
-      when :x
-        entry.bulletin_b_dx || entry.dx
-      when :y
-        entry.bulletin_b_dy || entry.dy
       end
     end
 
@@ -102,8 +93,6 @@ module IERS
       end
     end
 
-    private_class_method :interpolate_cpo,
-      :best_cpo,
-      :derive_quality
+    private_class_method :interpolate_cpo, :derive_quality
   end
 end

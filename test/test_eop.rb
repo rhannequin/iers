@@ -9,8 +9,8 @@ class TestEOPEntry < Minitest::Test
       polar_motion_y: 0.128,
       ut1_utc: 0.799,
       length_of_day: 0.0028,
-      celestial_pole_x: -18.700,
-      celestial_pole_y: -3.650,
+      celestial_pole_x: -0.725,
+      celestial_pole_y: -0.643,
       mjd: 41687.0,
       data_quality: :observed
     }
@@ -34,11 +34,11 @@ class TestEOPEntry < Minitest::Test
   end
 
   def test_has_celestial_pole_x
-    assert_in_delta(-18.700, build_entry.celestial_pole_x)
+    assert_in_delta(-0.725, build_entry.celestial_pole_x)
   end
 
   def test_has_celestial_pole_y
-    assert_in_delta(-3.650, build_entry.celestial_pole_y)
+    assert_in_delta(-0.643, build_entry.celestial_pole_y)
   end
 
   def test_has_mjd
@@ -117,13 +117,13 @@ class TestEOPAt < Minitest::Test
   def test_celestial_pole_x
     result = IERS::EOP.at(mjd: 41687.0)
 
-    assert_in_delta(-18.700, result.celestial_pole_x, 1e-3)
+    assert_in_delta(-0.725, result.celestial_pole_x, 1e-3)
   end
 
   def test_celestial_pole_y
     result = IERS::EOP.at(mjd: 41687.0)
 
-    assert_in_delta(-3.650, result.celestial_pole_y, 1e-3)
+    assert_in_delta(-0.643, result.celestial_pole_y, 1e-3)
   end
 
   def test_entry_has_query_mjd
