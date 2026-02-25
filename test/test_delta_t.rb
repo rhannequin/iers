@@ -68,3 +68,37 @@ class TestDeltaTAt < Minitest::Test
     end
   end
 end
+
+class TestDeltaTConsistency < Minitest::Test
+  def setup
+    IERS.configure do |config|
+      config.finals_path = fixture_path("finals_10_days.dat")
+      config.leap_second_path = fixture_path("leap_second_query.dat")
+    end
+  end
+
+  def teardown
+    IERS.reset_configuration!
+  end
+
+  def fixture_path(name)
+    Pathname(__dir__).join("fixtures", name)
+  end
+
+  def test_consistent_with_components
+    mjd = 41687.5
+    tai_utc = IERS::LeapSecond.at(mjd: mjd)
+    ut1_utc = IERS::UT1.at(mjd: mjd)
+    expected = tai_utc + 32.184 - ut1_utc
+
+    assert_in_delta expected, IERS::DeltaT.at(mjd: mjd), 1e-10
+  end
+
+  def test_pre_1972_error_message
+    error = assert_raises(IERS::OutOfRangeError) do
+      IERS::DeltaT.at(mjd: 41316.0)
+    end
+
+    assert_match(/1972/, error.message)
+  end
+end
