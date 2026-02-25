@@ -69,6 +69,17 @@ class TestPolarMotionEntry < Minitest::Test
     assert_predicate entry, :predicted?
   end
 
+  def test_date_returns_date
+    entry = IERS::PolarMotion::Entry.new(
+      x: 0.143,
+      y: 0.137,
+      mjd: 41684.0,
+      data_quality: :observed
+    )
+
+    assert_equal Date.new(1973, 1, 2), entry.date
+  end
+
   def test_is_frozen
     entry = IERS::PolarMotion::Entry.new(
       x: 0.143,

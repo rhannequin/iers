@@ -6,6 +6,8 @@ module IERS
     # @attr mjd [Float] Modified Julian Date of the query
     # @attr data_quality [Symbol] +:observed+ or +:predicted+
     Entry = ::Data.define(:length_of_day, :mjd, :data_quality) do
+      include HasDate
+
       # @return [Boolean]
       def observed?
         data_quality == :observed

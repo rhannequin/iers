@@ -53,6 +53,16 @@ class TestUT1Entry < Minitest::Test
     assert_predicate entry, :predicted?
   end
 
+  def test_date_returns_date
+    entry = IERS::UT1::Entry.new(
+      ut1_utc: 0.123,
+      mjd: 41684.0,
+      data_quality: :observed
+    )
+
+    assert_equal Date.new(1973, 1, 2), entry.date
+  end
+
   def test_is_frozen
     entry = IERS::UT1::Entry.new(
       ut1_utc: 0.123,

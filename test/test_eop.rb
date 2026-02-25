@@ -59,6 +59,10 @@ class TestEOPEntry < Minitest::Test
     assert_predicate entry, :predicted?
   end
 
+  def test_date_returns_date
+    assert_equal Date.new(1973, 1, 5), build_entry.date
+  end
+
   def test_is_frozen
     assert_predicate build_entry, :frozen?
   end

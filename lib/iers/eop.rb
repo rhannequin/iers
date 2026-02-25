@@ -20,6 +20,8 @@ module IERS
       :mjd,
       :data_quality
     ) do
+      include HasDate
+
       # @return [Boolean]
       def observed?
         data_quality == :observed

@@ -63,6 +63,16 @@ class TestLengthOfDayEntry < Minitest::Test
     assert_predicate entry, :predicted?
   end
 
+  def test_date_returns_date
+    entry = IERS::LengthOfDay::Entry.new(
+      length_of_day: 0.0028,
+      mjd: 41687.0,
+      data_quality: :observed
+    )
+
+    assert_equal Date.new(1973, 1, 5), entry.date
+  end
+
   def test_is_frozen
     entry = IERS::LengthOfDay::Entry.new(
       length_of_day: 0.0028,

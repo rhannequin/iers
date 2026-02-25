@@ -71,4 +71,16 @@ class TestTimeScale < Minitest::Test
       IERS::TimeScale.to_mjd(nil)
     end
   end
+
+  def test_to_date_converts_mjd
+    result = IERS::TimeScale.to_date(41317.0)
+
+    assert_equal Date.new(1972, 1, 1), result
+  end
+
+  def test_to_date_with_fractional_mjd
+    result = IERS::TimeScale.to_date(41317.5)
+
+    assert_equal Date.new(1972, 1, 1), result
+  end
 end
