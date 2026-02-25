@@ -5,6 +5,40 @@
 Access to Earth orientation parameters and time scale values from the
 International Earth Rotation and Reference Systems Service (IERS).
 
+## About IERS and Earth Orientation Parameters
+
+The [IERS] is an international service that monitors the irregularities of
+Earth's rotation and orientation in space. Because Earth's rotation is not
+perfectly uniform, precise timekeeping, satellite navigation, and telescope
+pointing all depend on regularly updated measurements.
+
+The key quantities tracked by the IERS are known as **Earth Orientation
+Parameters** (EOP):
+
+- **Polar motion (x, y)** — the position of Earth's rotational pole relative
+  to its crust, expressed in arcseconds. The pole wanders in a roughly circular
+  path of a few tenths of an arcsecond over ~14 months (the Chandler wobble).
+- **UT1−UTC** — the difference between astronomical time (UT1, tied to Earth's
+  actual rotation angle) and coordinated universal time (UTC, maintained by
+  atomic clocks). This difference drifts by up to ~0.9 s before a leap second
+  is introduced to keep them close.
+- **Leap seconds** — occasional one-second adjustments applied to UTC so that
+  it stays within 0.9 s of UT1. Since 1972, 27 leap seconds have been added.
+
+### Data files
+
+This library works with two data files published by the IERS:
+
+- **finals2000A** — a daily table spanning from 1973 to the present (plus
+  predictions ~1 year ahead). Each row contains polar motion, UT1−UTC, and
+  other EOP for one Modified Julian Date. Recent rows carry rapid "Series A"
+  values; older rows also include refined "Bulletin B" values.
+- **Leap_Second.dat** — the complete history of leap seconds with their
+  effective dates and the cumulative TAI−UTC offset.
+
+Both files are downloaded automatically by `IERS::Data.update!` and cached
+locally.
+
 ## Installation
 
 Install the gem and add to the application's Gemfile by executing:
@@ -18,7 +52,102 @@ executing:
 
 ## Usage
 
-Coming soon.
+### Downloading data
+
+Before querying, fetch the latest IERS data files:
+
+```ruby
+require "iers"
+
+result = IERS::Data.update!
+result.success? # => true
+```
+
+Downloaded files are cached in `~/.cache/iers/` by default.
+
+### Polar motion
+
+Query the pole position at any point in time:
+
+```ruby
+pm = IERS::PolarMotion.at(Time.utc(2020, 6, 15))
+pm.x          # => 0.070979... (arcseconds)
+pm.y          # => 0.456571... (arcseconds)
+pm.observed?  # => true
+```
+
+Retrieve daily grid values over a date range:
+
+```ruby
+entries = IERS::PolarMotion.between(
+  Date.new(2020, 1, 1),
+  Date.new(2020, 1, 31)
+)
+entries.size  # => 31
+```
+
+### UT1−UTC
+
+Query the difference between UT1 and UTC:
+
+```ruby
+IERS::UT1.at(Time.utc(2020, 6, 15))  # => -0.178182... (seconds)
+```
+
+For richer output, use `detailed_at`:
+
+```ruby
+entry = IERS::UT1.detailed_at(Time.utc(2020, 6, 15))
+entry.ut1_utc   # => -0.178182...
+entry.observed?  # => true
+```
+
+Daily grid values:
+
+```ruby
+entries = IERS::UT1.between(
+  Date.new(2020, 1, 1),
+  Date.new(2020, 1, 31)
+)
+```
+
+### Leap seconds
+
+Look up TAI−UTC at a given date:
+
+```ruby
+IERS::LeapSecond.at(Time.utc(2017, 1, 1))  # => 37.0 (seconds)
+```
+
+List all leap seconds:
+
+```ruby
+IERS::LeapSecond.all
+# => [#<data IERS::LeapSecond::Entry effective_date=#<Date: 1972-01-01>, tai_utc=10.0>, ...]
+```
+
+### Time input
+
+All query methods accept Ruby `Time`, `Date`, and `DateTime` objects as
+positional arguments. You can also use keyword arguments for numeric Julian
+Dates:
+
+```ruby
+IERS::UT1.at(mjd: 58849.0)        # Modified Julian Date
+IERS::UT1.at(jd: 2458849.5)       # Julian Date
+IERS::UT1.at(Time.utc(2020, 1, 1)) # Ruby Time
+```
+
+### Configuration
+
+```ruby
+IERS.configure do |config|
+  config.cache_dir = "/path/to/cache"
+  config.interpolation = :linear   # default: :lagrange
+  config.lagrange_order = 6        # default: 4
+  config.download_timeout = 60     # default: 30 (seconds)
+end
+```
 
 ## Development
 
@@ -40,6 +169,7 @@ The gem is available as open source under the terms of the [MIT License].
 Everyone interacting in the IERS Ruby project's codebases, issue trackers, chat
 rooms and mailing lists is expected to follow the [code of conduct].
 
+[IERS]: https://www.iers.org
 [Bundler]: https://bundler.io
 [rubygems.org]: https://rubygems.org
 [MIT License]: https://opensource.org/licenses/MIT
