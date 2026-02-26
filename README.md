@@ -75,6 +75,9 @@ result.success? # => true
 Downloaded files are cached in `~/.cache/iers/` by default and take precedence
 over the bundled snapshot.
 
+The bundled data files are sourced from the [IERS Earth Orientation Center] and
+the [USNO Rapid Service/Prediction Center].
+
 ### Polar motion
 
 Query the pole position at any point in time:
@@ -317,6 +320,8 @@ Everyone interacting in the IERS Ruby project's codebases, issue trackers, chat
 rooms and mailing lists is expected to follow the [code of conduct].
 
 [IERS]: https://www.iers.org
+[IERS Earth Orientation Center]: https://hpiers.obspm.fr/eop-pc/
+[USNO Rapid Service/Prediction Center]: https://maia.usno.navy.mil/ser7/
 [Bundler]: https://bundler.io
 [rubygems.org]: https://rubygems.org
 [MIT License]: https://opensource.org/licenses/MIT
