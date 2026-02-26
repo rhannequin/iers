@@ -11,10 +11,7 @@ module IERS
       include HasDataQuality
     end
 
-    FLAG_TO_QUALITY = {
-      "I" => :observed, "P" => :predicted
-    }.freeze
-    private_constant :FLAG_TO_QUALITY
+    extend EopParameter
 
     module_function
 
@@ -25,31 +22,20 @@ module IERS
     # @return [Entry]
     # @raise [OutOfRangeError]
     def at(input = nil, jd: nil, mjd: nil, interpolation: nil)
-      query_mjd = TimeScale.to_mjd(input, jd: jd, mjd: mjd)
-      entries = Data.finals_entries
-      method = interpolation ||
-        IERS.configuration.interpolation
+      query_mjd, window, method = resolve(
+        input,
+        jd: jd,
+        mjd: mjd,
+        interpolation: interpolation
+      )
 
-      case method
-      when :lagrange
-        order = IERS.configuration.lagrange_order
-        window = EopLookup.window(
-          entries, query_mjd, order: order
-        )
-        x = interpolate_pm(window, query_mjd, :lagrange, :x)
-        y = interpolate_pm(window, query_mjd, :lagrange, :y)
-        quality = derive_quality(window)
-      when :linear
-        bracket = EopLookup.bracket(entries, query_mjd)
-        x = interpolate_pm(bracket, query_mjd, :linear, :x)
-        y = interpolate_pm(bracket, query_mjd, :linear, :y)
-        quality = derive_quality(bracket)
-      end
+      x = interpolate_field(window, query_mjd, method) { |e| best_pm(e, :x) }
+      y = interpolate_field(window, query_mjd, method) { |e| best_pm(e, :y) }
 
       Entry.new(
         x: x, y: y,
         mjd: query_mjd,
-        data_quality: quality
+        data_quality: derive_quality(window, :pm_flag)
       )
     end
 
@@ -68,23 +54,11 @@ module IERS
             x: best_pm(e, :x),
             y: best_pm(e, :y),
             mjd: e.mjd,
-            data_quality: FLAG_TO_QUALITY.fetch(
+            data_quality: EopParameter::FLAG_TO_QUALITY.fetch(
               e.pm_flag, :observed
             )
           )
         end.freeze
-    end
-
-    def interpolate_pm(window, query_mjd, method, component)
-      xs = window.map(&:mjd)
-      ys = window.map { |e| best_pm(e, component) }
-
-      case method
-      when :lagrange
-        Interpolation.lagrange(xs, ys, query_mjd)
-      when :linear
-        Interpolation.linear(xs, ys, query_mjd)
-      end
     end
 
     def best_pm(entry, component)
@@ -96,16 +70,6 @@ module IERS
       end
     end
 
-    def derive_quality(window_entries)
-      if window_entries.any? { |e| e.pm_flag == "P" }
-        :predicted
-      else
-        :observed
-      end
-    end
-
-    private_class_method :interpolate_pm,
-      :best_pm,
-      :derive_quality
+    private_class_method :best_pm
   end
 end

@@ -10,8 +10,7 @@ module IERS
       include HasDataQuality
     end
 
-    FLAG_TO_QUALITY = {"I" => :observed, "P" => :predicted}.freeze
-    private_constant :FLAG_TO_QUALITY
+    extend EopParameter
 
     module_function
 
@@ -22,38 +21,19 @@ module IERS
     # @return [Entry]
     # @raise [OutOfRangeError]
     def at(input = nil, jd: nil, mjd: nil, interpolation: nil)
-      query_mjd = TimeScale.to_mjd(input, jd: jd, mjd: mjd)
-      entries = Data.finals_entries
-      method = interpolation || IERS.configuration.interpolation
+      query_mjd, window, method = resolve(
+        input,
+        jd: jd,
+        mjd: mjd,
+        interpolation: interpolation
+      )
 
-      case method
-      when :lagrange
-        order = IERS.configuration.lagrange_order
-        window = EopLookup.window(
-          entries,
-          query_mjd,
-          order: order
-        )
-        ut1_utc = interpolate_ut1(
-          window,
-          query_mjd,
-          :lagrange
-        )
-        quality = derive_quality(window)
-      when :linear
-        bracket = EopLookup.bracket(entries, query_mjd)
-        ut1_utc = interpolate_ut1(
-          bracket,
-          query_mjd,
-          :linear
-        )
-        quality = derive_quality(bracket)
-      end
+      ut1_utc = interpolate_ut1(window, query_mjd, method)
 
       Entry.new(
         ut1_utc: ut1_utc,
         mjd: query_mjd,
-        data_quality: quality
+        data_quality: derive_quality(window, :ut1_flag)
       )
     end
 
@@ -71,23 +51,17 @@ module IERS
           Entry.new(
             ut1_utc: best_ut1_utc(e),
             mjd: e.mjd,
-            data_quality: FLAG_TO_QUALITY.fetch(e.ut1_flag, :observed)
+            data_quality: EopParameter::FLAG_TO_QUALITY.fetch(e.ut1_flag, :observed)
           )
         end.freeze
     end
 
     def interpolate_ut1(window, query_mjd, method)
-      xs = window.map(&:mjd)
       leap_entries = Data.leap_second_entries
-
       tai_utc_at_query = tai_utc_for(leap_entries, query_mjd)
-      ys = window.map do |e|
-        best_ut1_utc(e) - tai_utc_for(leap_entries, e.mjd)
-      end
 
-      ut1_tai = case method
-      when :lagrange then Interpolation.lagrange(xs, ys, query_mjd)
-      when :linear then Interpolation.linear(xs, ys, query_mjd)
+      ut1_tai = interpolate_field(window, query_mjd, method) do |e|
+        best_ut1_utc(e) - tai_utc_for(leap_entries, e.mjd)
       end
 
       ut1_tai + tai_utc_at_query
@@ -102,17 +76,8 @@ module IERS
       entry.bulletin_b_ut1_utc || entry.ut1_utc
     end
 
-    def derive_quality(window_entries)
-      if window_entries.any? { |e| e.ut1_flag == "P" }
-        :predicted
-      else
-        :observed
-      end
-    end
-
     private_class_method :interpolate_ut1,
       :tai_utc_for,
-      :best_ut1_utc,
-      :derive_quality
+      :best_ut1_utc
   end
 end
