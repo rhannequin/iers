@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "matrix"
-
 module IERS
   module PolarMotion
     ARCSEC_TO_RAD = Math::PI / 648_000.0
@@ -23,7 +21,7 @@ module IERS
       #
       # All elements use exact trigonometry — no small-angle approximation.
       #
-      # @return [Matrix] 3x3 rotation matrix
+      # @return [Array<Array<Float>>] 3x3 rotation matrix
       def rotation_matrix
         xp = x * ARCSEC_TO_RAD
         yp = y * ARCSEC_TO_RAD
@@ -34,7 +32,7 @@ module IERS
         cy, sy = Math.cos(yp), Math.sin(yp)
         cs, ss = Math.cos(sp), Math.sin(sp)
 
-        Matrix[
+        [
           [cx * cs, cx * ss, sx],
           [sy * sx * cs - cy * ss, cy * cs + sy * sx * ss, -sy * cx],
           [-sy * ss - cy * sx * cs, sy * cs - cy * sx * ss, cy * cx]
@@ -74,7 +72,7 @@ module IERS
     # @param jd [Float, nil] Julian Date
     # @param mjd [Float, nil] Modified Julian Date
     # @param interpolation [Symbol, nil] +:lagrange+ or +:linear+
-    # @return [Matrix] 3x3 polar motion rotation matrix
+    # @return [Array<Array<Float>>] 3x3 polar motion rotation matrix
     # @raise [OutOfRangeError]
     def rotation_matrix_at(input = nil, jd: nil, mjd: nil, interpolation: nil)
       at(input, jd: jd, mjd: mjd, interpolation: interpolation)

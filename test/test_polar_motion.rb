@@ -410,28 +410,22 @@ end
 class TestPolarMotionEntryRotationMatrix < Minitest::Test
   ARCSEC_TO_RAD = Math::PI / 648_000.0
 
-  def test_returns_matrix_instance
+  def test_returns_nested_array
     entry = IERS::PolarMotion::Entry.new(
       x: 0.143, y: 0.137, mjd: 41684.0, data_quality: :observed
     )
 
-    assert_instance_of Matrix, entry.rotation_matrix
+    assert_instance_of Array, entry.rotation_matrix
   end
 
-  def test_row_count
+  def test_dimensions
     entry = IERS::PolarMotion::Entry.new(
       x: 0.143, y: 0.137, mjd: 41684.0, data_quality: :observed
     )
+    w = entry.rotation_matrix
 
-    assert_equal 3, entry.rotation_matrix.row_count
-  end
-
-  def test_column_count
-    entry = IERS::PolarMotion::Entry.new(
-      x: 0.143, y: 0.137, mjd: 41684.0, data_quality: :observed
-    )
-
-    assert_equal 3, entry.rotation_matrix.column_count
+    assert_equal 3, w.length
+    w.each { |row| assert_equal 3, row.length }
   end
 
   def test_diagonal_near_unity
@@ -440,9 +434,9 @@ class TestPolarMotionEntryRotationMatrix < Minitest::Test
     )
     w = entry.rotation_matrix
 
-    assert_in_delta 1.0, w[0, 0], 1e-10
-    assert_in_delta 1.0, w[1, 1], 1e-10
-    assert_in_delta 1.0, w[2, 2], 1e-10
+    assert_in_delta 1.0, w[0][0], 1e-10
+    assert_in_delta 1.0, w[1][1], 1e-10
+    assert_in_delta 1.0, w[2][2], 1e-10
   end
 
   def test_w20_approximates_negative_xp_rad
@@ -451,7 +445,7 @@ class TestPolarMotionEntryRotationMatrix < Minitest::Test
     )
     xp_rad = 0.143 * ARCSEC_TO_RAD
 
-    assert_in_delta(-xp_rad, entry.rotation_matrix[2, 0], 1e-12)
+    assert_in_delta(-xp_rad, entry.rotation_matrix[2][0], 1e-12)
   end
 
   def test_w21_approximates_yp_rad
@@ -460,7 +454,7 @@ class TestPolarMotionEntryRotationMatrix < Minitest::Test
     )
     yp_rad = 0.137 * ARCSEC_TO_RAD
 
-    assert_in_delta yp_rad, entry.rotation_matrix[2, 1], 1e-12
+    assert_in_delta yp_rad, entry.rotation_matrix[2][1], 1e-12
   end
 
   def test_orthogonality
@@ -468,13 +462,16 @@ class TestPolarMotionEntryRotationMatrix < Minitest::Test
       x: 0.143, y: 0.137, mjd: 41684.0, data_quality: :observed
     )
     w = entry.rotation_matrix
-    product = w.transpose * w
+    wt = w.transpose
+    product = Array.new(3) { |i|
+      Array.new(3) { |j| wt[i].zip(w.map { |r| r[j] }).sum { |a, b| a * b } }
+    }
 
     3.times do |i|
       3.times do |j|
         expected = (i == j) ? 1.0 : 0.0
 
-        assert_in_delta expected, product[i, j], 1e-12,
+        assert_in_delta expected, product[i][j], 1e-12,
           "W^T * W [#{i},#{j}] should be #{expected}"
       end
     end
@@ -499,10 +496,10 @@ class TestPolarMotionRotationMatrixAt < Minitest::Test
     Pathname(__dir__).join("fixtures", name)
   end
 
-  def test_returns_matrix_instance
+  def test_returns_nested_array
     result = IERS::PolarMotion.rotation_matrix_at(mjd: 41684.0)
 
-    assert_instance_of Matrix, result
+    assert_instance_of Array, result
   end
 
   def test_matches_entry_rotation_matrix
@@ -517,7 +514,7 @@ class TestPolarMotionRotationMatrixAt < Minitest::Test
       jd: 41684.0 + 2_400_000.5
     )
 
-    assert_instance_of Matrix, result
+    assert_instance_of Array, result
   end
 
   def test_accepts_time_object
@@ -525,6 +522,6 @@ class TestPolarMotionRotationMatrixAt < Minitest::Test
       Time.utc(1973, 1, 2)
     )
 
-    assert_instance_of Matrix, result
+    assert_instance_of Array, result
   end
 end
