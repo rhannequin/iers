@@ -27,8 +27,6 @@ module IERS
         Float(jd) - JD_MJD_OFFSET
       elsif input.is_a?(Time)
         input.to_datetime.ajd.to_f - JD_MJD_OFFSET
-      elsif input.is_a?(DateTime)
-        input.ajd.to_f - JD_MJD_OFFSET
       elsif input.is_a?(Date)
         input.ajd.to_f - JD_MJD_OFFSET
       else
