@@ -217,7 +217,16 @@ class TestEOPBetween < Minitest::Test
     Pathname(__dir__).join("fixtures", name)
   end
 
-  def test_returns_array_of_entries
+  def test_returns_lazy_enumerator
+    results = IERS::EOP.between(
+      Date.new(1973, 1, 3),
+      Date.new(1973, 1, 5)
+    )
+
+    assert_instance_of Enumerator::Lazy, results
+  end
+
+  def test_yields_entries
     results = IERS::EOP.between(
       Date.new(1973, 1, 3),
       Date.new(1973, 1, 5)
@@ -232,7 +241,7 @@ class TestEOPBetween < Minitest::Test
       Date.new(1973, 1, 7)
     )
 
-    assert_equal 5, results.size
+    assert_equal 5, results.count
   end
 
   def test_first_entry_mjd
@@ -250,7 +259,7 @@ class TestEOPBetween < Minitest::Test
       Date.new(1973, 1, 7)
     )
 
-    assert_in_delta 41689.0, results.last.mjd
+    assert_in_delta 41689.0, results.to_a.last.mjd
   end
 
   def test_entries_have_all_components
@@ -277,13 +286,13 @@ class TestEOPBetween < Minitest::Test
     assert_includes [:observed, :predicted], results.first.data_quality
   end
 
-  def test_empty_array_for_out_of_data_range
+  def test_empty_for_out_of_data_range
     results = IERS::EOP.between(
       Date.new(1980, 1, 1),
       Date.new(1980, 1, 5)
     )
 
-    assert_empty results
+    refute_predicate results, :any?
   end
 
   def test_single_day_range
@@ -292,16 +301,7 @@ class TestEOPBetween < Minitest::Test
       Date.new(1973, 1, 5)
     )
 
-    assert_equal 1, results.size
-  end
-
-  def test_returns_frozen_array
-    results = IERS::EOP.between(
-      Date.new(1973, 1, 3),
-      Date.new(1973, 1, 5)
-    )
-
-    assert_predicate results, :frozen?
+    assert_equal 1, results.count
   end
 
   def test_uses_bulletin_b_values

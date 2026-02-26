@@ -39,7 +39,7 @@ module IERS
 
     # @param start_date [Date]
     # @param end_date [Date]
-    # @return [Array<Entry>]
+    # @return [Enumerator::Lazy<Entry>]
     def between(start_date, end_date)
       start_mjd = TimeScale.to_mjd(start_date)
       end_mjd = TimeScale.to_mjd(end_date)
@@ -47,13 +47,14 @@ module IERS
 
       EopLookup
         .range(entries, start_mjd, end_mjd)
+        .lazy
         .map do |e|
           Entry.new(
             length_of_day: e.lod / 1000.0,
             mjd: e.mjd,
             data_quality: EopParameter::FLAG_TO_QUALITY.fetch(e.ut1_flag, :observed)
           )
-        end.freeze
+        end
     end
   end
 end
