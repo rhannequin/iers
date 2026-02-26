@@ -25,11 +25,6 @@ module IERS
       @all = nil
     end
 
-    # @return [Array<Entry>]
-    def table
-      all
-    end
-
     # @return [Entry, nil]
     def next_scheduled
       today = Date.today

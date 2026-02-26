@@ -82,19 +82,6 @@ class TestLeapSecond < Minitest::Test
     assert_predicate IERS::LeapSecond.all, :frozen?
   end
 
-  def test_table_returns_same_as_all
-    assert_equal IERS::LeapSecond.all, IERS::LeapSecond.table
-  end
-
-  def test_table_first_entry_has_effective_date
-    assert_equal Date.new(1972, 1, 1),
-      IERS::LeapSecond.table.first.effective_date
-  end
-
-  def test_table_first_entry_has_tai_utc
-    assert_equal 10, IERS::LeapSecond.table.first.tai_utc
-  end
-
   def test_at_on_last_entry_date
     assert_equal 37, IERS::LeapSecond.at(Time.utc(2017, 1, 1))
   end
