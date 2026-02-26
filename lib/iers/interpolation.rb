@@ -17,7 +17,7 @@ module IERS
       x0, x1 = xs
       y0, y1 = ys
       t = (x - x0) / (x1 - x0)
-      (y0 + t * (y1 - y0)).to_f
+      y0 + t * (y1 - y0)
     end
 
     # @param xs [Array<Float>] x-coordinates
@@ -44,7 +44,7 @@ module IERS
         end
         result += ys[i] * basis
       end
-      result.to_f
+      result
     end
   end
 end
