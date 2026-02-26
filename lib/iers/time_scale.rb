@@ -12,7 +12,7 @@ module IERS
     # @param mjd [Float] Modified Julian Date
     # @return [Date]
     def to_date(mjd)
-      Date.jd((mjd + JD_MJD_OFFSET).ceil)
+      Date.jd((mjd.floor + JD_MJD_OFFSET).ceil)
     end
 
     # @param input [Time, Date, DateTime, nil]
