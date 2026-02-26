@@ -168,6 +168,12 @@ class TestData < Minitest::Test
       Pathname(@tmpdir).join("finals2000A.all").read
   end
 
+  def test_status_without_cache_is_bundled
+    status = IERS::Data.status
+
+    assert_equal :bundled, status.source
+  end
+
   def test_status_without_cache_is_not_cached
     status = IERS::Data.status
 
@@ -278,10 +284,10 @@ class TestData < Minitest::Test
     assert_equal 1, entries.size
   end
 
-  def test_finals_entries_raises_file_not_found_when_not_downloaded
-    assert_raises(IERS::FileNotFoundError) do
-      IERS::Data.finals_entries
-    end
+  def test_finals_entries_falls_back_to_bundled_data
+    entries = IERS::Data.finals_entries
+
+    assert_operator entries.size, :>, 0
   end
 
   def test_leap_second_entries_returns_parsed_entries
@@ -311,10 +317,19 @@ class TestData < Minitest::Test
     assert_equal 1, entries.size
   end
 
-  def test_leap_second_entries_raises_file_not_found_when_not_downloaded
-    assert_raises(IERS::FileNotFoundError) do
-      IERS::Data.leap_second_entries
-    end
+  def test_leap_second_entries_falls_back_to_bundled_data
+    entries = IERS::Data.leap_second_entries
+
+    assert_operator entries.size, :>, 0
+  end
+
+  def test_cached_data_takes_precedence_over_bundled
+    write_finals_fixture
+    write_leap_second_fixture
+
+    entries = IERS::Data.finals_entries
+
+    assert_equal 1, entries.size
   end
 
   private

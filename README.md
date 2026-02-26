@@ -52,18 +52,28 @@ executing:
 
 ## Usage
 
-### Downloading data
+### Bundled data
 
-Before querying, fetch the latest IERS data files:
+The gem ships with a snapshot of the IERS data files taken at release time, so
+queries work immediately without any download:
 
 ```ruby
 require "iers"
 
+IERS::UT1.at(Time.utc(2020, 6, 15))  # works out of the box
+```
+
+The bundled snapshot includes predictions roughly one year into the future from
+the release date. As time passes those predictions expire, so you should
+download fresh data periodically:
+
+```ruby
 result = IERS::Data.update!
 result.success? # => true
 ```
 
-Downloaded files are cached in `~/.cache/iers/` by default.
+Downloaded files are cached in `~/.cache/iers/` by default and take precedence
+over the bundled snapshot.
 
 ### Polar motion
 

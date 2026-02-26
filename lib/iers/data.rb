@@ -7,6 +7,8 @@ module IERS
       leap_seconds: "Leap_Second.dat"
     }.freeze
 
+    BUNDLED_DIR = Pathname(__dir__).join("..", "..", "data").expand_path
+
     @mutex = Mutex.new
     @finals = nil
     @leap_seconds = nil
@@ -88,7 +90,7 @@ module IERS
     def finals_entries
       @mutex.synchronize do
         @finals ||= begin
-          path = resolve_path(:finals)
+          path = resolve_read_path(:finals)
           Parsers::Finals.parse(path).freeze
         end
       end
@@ -98,7 +100,7 @@ module IERS
     def leap_second_entries
       @mutex.synchronize do
         @leap_seconds ||= begin
-          path = resolve_path(:leap_seconds)
+          path = resolve_read_path(:leap_seconds)
           Parsers::LeapSecond.parse(path).freeze
         end
       end
@@ -112,6 +114,13 @@ module IERS
         config.leap_second_path ||
           config.cache_dir.join(FILENAMES[:leap_seconds])
       end
+    end
+
+    def resolve_read_path(source, config = IERS.configuration)
+      path = resolve_path(source, config)
+      return path if Pathname(path).exist?
+
+      BUNDLED_DIR.join(FILENAMES[source])
     end
 
     def validate_source!(source, config)
@@ -151,6 +160,7 @@ module IERS
     end
 
     private_class_method :resolve_path,
+      :resolve_read_path,
       :validate_source!,
       :custom_paths_configured?,
       :cache_exists?,
