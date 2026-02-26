@@ -21,6 +21,7 @@ require_relative "iers/celestial_pole_offset"
 require_relative "iers/length_of_day"
 require_relative "iers/delta_t"
 require_relative "iers/earth_rotation_angle"
+require_relative "iers/gmst"
 require_relative "iers/eop"
 
 module IERS

@@ -10,6 +10,8 @@ module IERS
     MJD_J2000 = 51_544.5
     DAYS_PER_JULIAN_CENTURY = 36_525.0
     SECONDS_PER_DAY = 86_400.0
+    ARCSEC_TO_RAD = Math::PI / 648_000.0
+    TT_TAI = 32.184 # seconds
 
     module_function
 

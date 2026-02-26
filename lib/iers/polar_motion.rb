@@ -2,8 +2,6 @@
 
 module IERS
   module PolarMotion
-    ARCSEC_TO_RAD = Math::PI / 648_000.0
-
     # TIO locator rate in arcseconds per Julian century
     # (IERS Conventions 2010, eq. 5.13)
     S_PRIME_RATE = -0.000047
@@ -23,10 +21,10 @@ module IERS
       #
       # @return [Array<Array<Float>>] 3x3 rotation matrix
       def rotation_matrix
-        xp = x * ARCSEC_TO_RAD
-        yp = y * ARCSEC_TO_RAD
+        xp = x * TimeScale::ARCSEC_TO_RAD
+        yp = y * TimeScale::ARCSEC_TO_RAD
         t = (mjd - TimeScale::MJD_J2000) / TimeScale::DAYS_PER_JULIAN_CENTURY
-        sp = S_PRIME_RATE * t * ARCSEC_TO_RAD
+        sp = S_PRIME_RATE * t * TimeScale::ARCSEC_TO_RAD
 
         cx, sx = Math.cos(xp), Math.sin(xp)
         cy, sy = Math.cos(yp), Math.sin(yp)

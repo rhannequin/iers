@@ -83,7 +83,7 @@ entries = IERS::PolarMotion.between(
   Date.new(2020, 1, 1),
   Date.new(2020, 1, 31)
 )
-entries.size  # => 31
+entries.count  # => 31
 ```
 
 #### Rotation matrix
@@ -92,17 +92,17 @@ Compute the polar motion rotation matrix W (IERS Conventions 2010, §5.4.1):
 
 ```ruby
 w = IERS::PolarMotion.rotation_matrix_at(Time.utc(2020, 6, 15))
-w.row_count    # => 3
-w.column_count # => 3
+w.length     # => 3
+w[0].length  # => 3
 ```
 
-Returns a `Matrix` from Ruby's standard library, so it supports `*`, `.transpose`, and other matrix operations directly.
+Returns a nested `Array` (3×3, row-major).
 
 The matrix is also available on any `PolarMotion::Entry`:
 
 ```ruby
 pm = IERS::PolarMotion.at(Time.utc(2020, 6, 15))
-pm.rotation_matrix  # => same Matrix
+pm.rotation_matrix  # => same nested Array
 ```
 
 ### UT1−UTC
@@ -159,6 +159,15 @@ looked up internally:
 
 ```ruby
 IERS::EarthRotationAngle.at(Time.utc(2020, 6, 15))  # => radians, in [0, 2π)
+```
+
+### Greenwich Mean Sidereal Time
+
+Compute GMST (IERS Conventions 2010, eq. 5.32). Uses ERA internally and adds
+the equinox-based polynomial evaluated at TT:
+
+```ruby
+IERS::GMST.at(Time.utc(2020, 6, 15))  # => radians, in [0, 2π)
 ```
 
 ### Earth Orientation Parameters (unified)

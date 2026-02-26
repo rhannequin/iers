@@ -2,9 +2,6 @@
 
 module IERS
   module DeltaT
-    TT_TAI = 32.184
-    private_constant :TT_TAI
-
     PRE_1972_MJD = 41317.0
     private_constant :PRE_1972_MJD
 
@@ -29,7 +26,7 @@ module IERS
       tai_utc = LeapSecond.at(mjd: query_mjd)
       ut1_utc = UT1.at(mjd: query_mjd).ut1_utc
 
-      tai_utc + TT_TAI - ut1_utc
+      tai_utc + TimeScale::TT_TAI - ut1_utc
     end
   end
 end
