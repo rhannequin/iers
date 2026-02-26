@@ -75,6 +75,51 @@ class TestEarthRotationAngleAt < Minitest::Test
   end
 end
 
+class TestEarthRotationAngleInterpolationOverride < Minitest::Test
+  def setup
+    IERS.configure do |config|
+      config.finals_path = fixture_path("finals_10_days.dat")
+      config.leap_second_path = fixture_path("leap_second_query.dat")
+    end
+  end
+
+  def teardown
+    IERS.reset_configuration!
+  end
+
+  def fixture_path(name)
+    Pathname(__dir__).join("fixtures", name)
+  end
+
+  def test_linear_override_returns_float
+    result = IERS::EarthRotationAngle.at(
+      mjd: 41687.5,
+      interpolation: :linear
+    )
+
+    assert_instance_of Float, result
+  end
+
+  def test_linear_and_lagrange_produce_distinct_results
+    linear = IERS::EarthRotationAngle.at(
+      mjd: 41687.5,
+      interpolation: :linear
+    )
+    lagrange = IERS::EarthRotationAngle.at(
+      mjd: 41687.5,
+      interpolation: :lagrange
+    )
+
+    refute_in_delta linear, lagrange, 1e-10
+  end
+
+  def test_override_does_not_mutate_global_config
+    IERS::EarthRotationAngle.at(mjd: 41687.5, interpolation: :linear)
+
+    assert_equal :lagrange, IERS.configuration.interpolation
+  end
+end
+
 class TestEarthRotationAngleConsistency < Minitest::Test
   def setup
     IERS.configure do |config|

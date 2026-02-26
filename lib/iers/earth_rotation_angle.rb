@@ -19,11 +19,12 @@ module IERS
     # @param input [Time, Date, DateTime, nil]
     # @param jd [Float, nil] Julian Date
     # @param mjd [Float, nil] Modified Julian Date
+    # @param interpolation [Symbol, nil] +:lagrange+ or +:linear+
     # @return [Float] Earth Rotation Angle in radians, normalized to [0, 2π)
     # @raise [OutOfRangeError]
-    def at(input = nil, jd: nil, mjd: nil)
+    def at(input = nil, jd: nil, mjd: nil, interpolation: nil)
       query_mjd = TimeScale.to_mjd(input, jd: jd, mjd: mjd)
-      ut1_utc = UT1.at(mjd: query_mjd).ut1_utc
+      ut1_utc = UT1.at(mjd: query_mjd, interpolation: interpolation).ut1_utc
 
       du = query_mjd - TimeScale::MJD_J2000 +
         ut1_utc / TimeScale::SECONDS_PER_DAY
