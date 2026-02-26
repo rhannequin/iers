@@ -88,7 +88,7 @@ class TestDeltaTConsistency < Minitest::Test
   def test_consistent_with_components
     mjd = 41687.5
     tai_utc = IERS::LeapSecond.at(mjd: mjd)
-    ut1_utc = IERS::UT1.at(mjd: mjd)
+    ut1_utc = IERS::UT1.at(mjd: mjd).ut1_utc
     expected = tai_utc + 32.184 - ut1_utc
 
     assert_in_delta expected, IERS::DeltaT.at(mjd: mjd), 1e-10

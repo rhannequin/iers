@@ -19,24 +19,9 @@ module IERS
     # @param jd [Float, nil] Julian Date
     # @param mjd [Float, nil] Modified Julian Date
     # @param interpolation [Symbol, nil] +:lagrange+ or +:linear+
-    # @return [Float] excess LOD in seconds
-    # @raise [OutOfRangeError]
-    def at(input = nil, jd: nil, mjd: nil, interpolation: nil)
-      detailed_at(
-        input,
-        jd: jd,
-        mjd: mjd,
-        interpolation: interpolation
-      ).length_of_day
-    end
-
-    # @param input [Time, Date, DateTime, nil]
-    # @param jd [Float, nil] Julian Date
-    # @param mjd [Float, nil] Modified Julian Date
-    # @param interpolation [Symbol, nil] +:lagrange+ or +:linear+
     # @return [Entry]
     # @raise [OutOfRangeError]
-    def detailed_at(input = nil, jd: nil, mjd: nil, interpolation: nil)
+    def at(input = nil, jd: nil, mjd: nil, interpolation: nil)
       query_mjd = TimeScale.to_mjd(input, jd: jd, mjd: mjd)
       entries = Data.finals_entries
       method = interpolation || IERS.configuration.interpolation

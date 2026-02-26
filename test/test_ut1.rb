@@ -90,16 +90,16 @@ class TestUT1At < Minitest::Test
     Pathname(__dir__).join("fixtures", name)
   end
 
-  def test_returns_float
-    assert_instance_of Float, IERS::UT1.at(mjd: 41687.5)
+  def test_returns_entry
+    assert_instance_of IERS::UT1::Entry, IERS::UT1.at(mjd: 41687.5)
   end
 
   def test_on_exact_grid_point_prefers_bulletin_b
-    assert_in_delta 0.8075, IERS::UT1.at(mjd: 41684.0), 1e-4
+    assert_in_delta 0.8075, IERS::UT1.at(mjd: 41684.0).ut1_utc, 1e-4
   end
 
   def test_between_grid_points
-    result = IERS::UT1.at(mjd: 41687.5)
+    result = IERS::UT1.at(mjd: 41687.5).ut1_utc
 
     assert_operator result, :>, 0.796
     assert_operator result, :<, 0.799
@@ -108,13 +108,13 @@ class TestUT1At < Minitest::Test
   def test_with_time_object
     result = IERS::UT1.at(Time.utc(1973, 1, 5))
 
-    assert_in_delta 0.799, result, 1e-3
+    assert_in_delta 0.799, result.ut1_utc, 1e-3
   end
 
   def test_with_date_object
     result = IERS::UT1.at(Date.new(1973, 1, 5))
 
-    assert_in_delta 0.799, result, 1e-3
+    assert_in_delta 0.799, result.ut1_utc, 1e-3
   end
 
   def test_before_data_raises_out_of_range_error
@@ -133,7 +133,7 @@ class TestUT1At < Minitest::Test
   end
 end
 
-class TestUT1DetailedAt < Minitest::Test
+class TestUT1AtDataQuality < Minitest::Test
   def setup
     IERS.configure do |config|
       config.finals_path = fixture_path("finals_mixed_ip.dat")
@@ -150,69 +150,62 @@ class TestUT1DetailedAt < Minitest::Test
   end
 
   def test_returns_entry_instance
-    result = IERS::UT1.detailed_at(mjd: 41685.5)
+    result = IERS::UT1.at(mjd: 41685.5)
 
     assert_instance_of IERS::UT1::Entry, result
   end
 
   def test_entry_has_ut1_utc_float
-    result = IERS::UT1.detailed_at(mjd: 41685.5)
+    result = IERS::UT1.at(mjd: 41685.5)
 
     assert_instance_of Float, result.ut1_utc
   end
 
   def test_entry_has_query_mjd
-    result = IERS::UT1.detailed_at(mjd: 41685.5)
+    result = IERS::UT1.at(mjd: 41685.5)
 
     assert_in_delta 41685.5, result.mjd
   end
 
   def test_observed_data_is_observed
-    result = IERS::UT1.detailed_at(mjd: 41685.5)
+    result = IERS::UT1.at(mjd: 41685.5)
 
     assert_predicate result, :observed?
   end
 
   def test_predicted_data_is_predicted
-    result = IERS::UT1.detailed_at(mjd: 41688.5)
+    result = IERS::UT1.at(mjd: 41688.5)
 
     assert_predicate result, :predicted?
   end
 
   def test_crossing_boundary_is_predicted
-    result = IERS::UT1.detailed_at(mjd: 41687.5)
+    result = IERS::UT1.at(mjd: 41687.5)
 
     assert_predicate result, :predicted?
   end
 
-  def test_ut1_utc_matches_scalar_at
-    detailed = IERS::UT1.detailed_at(mjd: 41685.5)
-    scalar = IERS::UT1.at(mjd: 41685.5)
-
-    assert_in_delta scalar, detailed.ut1_utc
-  end
-
   def test_accepts_time_object
-    result = IERS::UT1.detailed_at(Time.utc(1973, 1, 4))
+    result = IERS::UT1.at(Time.utc(1973, 1, 4))
 
     assert_instance_of IERS::UT1::Entry, result
   end
 
   def test_observed_data_uses_bulletin_b
-    result = IERS::UT1.detailed_at(mjd: 41684.0)
+    result = IERS::UT1.at(mjd: 41684.0)
 
     assert_in_delta 0.8075, result.ut1_utc, 1e-4
   end
 
   def test_predicted_data_falls_back_to_series_a
-    result = IERS::UT1.detailed_at(mjd: 41688.5)
+    result = IERS::UT1.at(mjd: 41688.5)
 
     assert_operator result.ut1_utc.abs, :>, 0
   end
 
   def test_out_of_range_raises_error
     assert_raises(IERS::OutOfRangeError) do
-      IERS::UT1.detailed_at(mjd: 41683.0)
+      IERS::UT1.at(mjd: 41683.0)
     end
   end
 end
@@ -340,21 +333,21 @@ class TestUT1InterpolationOverride < Minitest::Test
     Pathname(__dir__).join("fixtures", name)
   end
 
-  def test_linear_override_returns_float
+  def test_linear_override_returns_entry
     result = IERS::UT1.at(mjd: 41687.5, interpolation: :linear)
 
-    assert_instance_of Float, result
+    assert_instance_of IERS::UT1::Entry, result
   end
 
   def test_linear_and_lagrange_produce_distinct_results
     linear = IERS::UT1.at(
       mjd: 41687.5,
       interpolation: :linear
-    )
+    ).ut1_utc
     lagrange = IERS::UT1.at(
       mjd: 41687.5,
       interpolation: :lagrange
-    )
+    ).ut1_utc
 
     refute_in_delta linear, lagrange, 1e-10
   end
@@ -373,16 +366,7 @@ class TestUT1InterpolationOverride < Minitest::Test
       interpolation: :linear
     )
 
-    assert_in_delta expected, result, 1e-4
-  end
-
-  def test_detailed_at_accepts_override
-    result = IERS::UT1.detailed_at(
-      mjd: 41687.5,
-      interpolation: :linear
-    )
-
-    assert_instance_of IERS::UT1::Entry, result
+    assert_in_delta expected, result.ut1_utc, 1e-4
   end
 
   def test_global_linear_config_works
@@ -391,17 +375,17 @@ class TestUT1InterpolationOverride < Minitest::Test
     expected = (0.799 + 0.796) / 2.0
     result = IERS::UT1.at(mjd: 41687.5)
 
-    assert_in_delta expected, result, 1e-4
+    assert_in_delta expected, result.ut1_utc, 1e-4
   end
 
   def test_global_linear_overridden_by_per_query_lagrange
     IERS.configure { |c| c.interpolation = :linear }
 
-    linear = IERS::UT1.at(mjd: 41687.5)
+    linear = IERS::UT1.at(mjd: 41687.5).ut1_utc
     lagrange = IERS::UT1.at(
       mjd: 41687.5,
       interpolation: :lagrange
-    )
+    ).ut1_utc
 
     refute_in_delta linear, lagrange, 1e-10
   end
@@ -430,25 +414,25 @@ class TestUT1LeapSecondBoundary < Minitest::Test
   def test_midpoint_across_leap_second_is_negative
     result = IERS::UT1.at(mjd: 57753.5)
 
-    assert_operator result, :<, 0
+    assert_operator result.ut1_utc, :<, 0
   end
 
   def test_midpoint_matches_smooth_interpolation
     result = IERS::UT1.at(mjd: 57753.5)
 
-    assert_in_delta(-0.4082, result, 1e-3)
+    assert_in_delta(-0.4082, result.ut1_utc, 1e-3)
   end
 
   def test_exact_grid_after_leap_returns_tabulated_value
     result = IERS::UT1.at(mjd: 57754.0)
 
-    assert_in_delta 0.5912821, result, 1e-4
+    assert_in_delta 0.5912821, result.ut1_utc, 1e-4
   end
 
   def test_away_from_boundary_still_works
     result = IERS::UT1.at(mjd: 57752.5)
 
-    assert_in_delta(-0.4065, result, 1e-3)
+    assert_in_delta(-0.4065, result.ut1_utc, 1e-3)
   end
 
   def test_linear_across_leap_second_boundary
@@ -457,6 +441,6 @@ class TestUT1LeapSecondBoundary < Minitest::Test
       interpolation: :linear
     )
 
-    assert_in_delta(-0.408, result, 1e-2)
+    assert_in_delta(-0.408, result.ut1_utc, 1e-2)
   end
 end

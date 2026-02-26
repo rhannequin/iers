@@ -37,9 +37,9 @@ module IERS
       interp = interpolation ? {interpolation: interpolation} : {}
 
       pm = PolarMotion.at(mjd: query_mjd, **interp)
-      ut1 = UT1.detailed_at(mjd: query_mjd, **interp)
+      ut1 = UT1.at(mjd: query_mjd, **interp)
       cpo = CelestialPoleOffset.at(mjd: query_mjd, **interp)
-      lod = LengthOfDay.detailed_at(mjd: query_mjd, **interp)
+      lod = LengthOfDay.at(mjd: query_mjd, **interp)
 
       quality = if [pm, ut1, cpo, lod].any?(&:predicted?)
         :predicted

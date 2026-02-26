@@ -27,7 +27,7 @@ module IERS
       end
 
       tai_utc = LeapSecond.at(mjd: query_mjd)
-      ut1_utc = UT1.at(mjd: query_mjd)
+      ut1_utc = UT1.at(mjd: query_mjd).ut1_utc
 
       tai_utc + TT_TAI - ut1_utc
     end

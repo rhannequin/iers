@@ -91,14 +91,8 @@ entries.size  # => 31
 Query the difference between UT1 and UTC:
 
 ```ruby
-IERS::UT1.at(Time.utc(2020, 6, 15))  # => -0.178182... (seconds)
-```
-
-For richer output, use `detailed_at`:
-
-```ruby
-entry = IERS::UT1.detailed_at(Time.utc(2020, 6, 15))
-entry.ut1_utc   # => -0.178182...
+entry = IERS::UT1.at(Time.utc(2020, 6, 15))
+entry.ut1_utc    # => -0.178182...
 entry.observed?  # => true
 ```
 
@@ -126,13 +120,7 @@ cpo.y  # => dY correction (milliarcseconds)
 Query the excess length of day:
 
 ```ruby
-IERS::LengthOfDay.at(Time.utc(2020, 6, 15))  # => excess LOD (seconds)
-```
-
-For richer output, use `detailed_at`:
-
-```ruby
-entry = IERS::LengthOfDay.detailed_at(Time.utc(2020, 6, 15))
+entry = IERS::LengthOfDay.at(Time.utc(2020, 6, 15))
 entry.length_of_day  # => excess LOD (seconds)
 entry.observed?      # => true
 ```
