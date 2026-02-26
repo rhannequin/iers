@@ -190,6 +190,15 @@ class TestEOPDataQuality < Minitest::Test
 
     assert_predicate result, :predicted?
   end
+
+  def test_between_observed_entries_are_observed
+    results = IERS::EOP.between(
+      Date.new(1973, 1, 3),
+      Date.new(1973, 1, 5)
+    )
+
+    assert results.all?(&:observed?)
+  end
 end
 
 class TestEOPBetween < Minitest::Test
