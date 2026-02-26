@@ -152,6 +152,15 @@ Compute Delta T (TT − UT1), available from 1972 onward:
 IERS::DeltaT.at(Time.utc(2020, 6, 15))  # => ~69.36 (seconds)
 ```
 
+### Earth Rotation Angle
+
+Compute ERA (IERS Conventions 2010, eq. 5.15). The UT1-UTC correction is
+looked up internally:
+
+```ruby
+IERS::EarthRotationAngle.at(Time.utc(2020, 6, 15))  # => radians, in [0, 2π)
+```
+
 ### Earth Orientation Parameters (unified)
 
 Query all EOP components at once:

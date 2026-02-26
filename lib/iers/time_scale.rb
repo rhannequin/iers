@@ -6,6 +6,10 @@ module IERS
   # @api private
   module TimeScale
     JD_MJD_OFFSET = 2_400_000.5
+    JD_J2000 = 2_451_545.0
+    MJD_J2000 = 51_544.5
+    DAYS_PER_JULIAN_CENTURY = 36_525.0
+    SECONDS_PER_DAY = 86_400.0
 
     module_function
 
