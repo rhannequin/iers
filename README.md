@@ -86,6 +86,25 @@ entries = IERS::PolarMotion.between(
 entries.size  # => 31
 ```
 
+#### Rotation matrix
+
+Compute the polar motion rotation matrix W (IERS Conventions 2010, §5.4.1):
+
+```ruby
+w = IERS::PolarMotion.rotation_matrix_at(Time.utc(2020, 6, 15))
+w.row_count    # => 3
+w.column_count # => 3
+```
+
+Returns a `Matrix` from Ruby's standard library, so it supports `*`, `.transpose`, and other matrix operations directly.
+
+The matrix is also available on any `PolarMotion::Entry`:
+
+```ruby
+pm = IERS::PolarMotion.at(Time.utc(2020, 6, 15))
+pm.rotation_matrix  # => same Matrix
+```
+
 ### UT1−UTC
 
 Query the difference between UT1 and UTC:

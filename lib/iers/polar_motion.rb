@@ -1,7 +1,17 @@
 # frozen_string_literal: true
 
+require "matrix"
+
 module IERS
   module PolarMotion
+    ARCSEC_TO_RAD = Math::PI / 648_000.0
+    MJD_J2000 = 51_544.5
+    DAYS_PER_JULIAN_CENTURY = 36_525.0
+
+    # TIO locator rate in arcseconds per Julian century
+    # (IERS Conventions 2010, eq. 5.13)
+    S_PRIME_RATE = -0.000047
+
     # @attr x [Float] pole x-coordinate in arcseconds
     # @attr y [Float] pole y-coordinate in arcseconds
     # @attr mjd [Float] Modified Julian Date of the query
@@ -9,6 +19,29 @@ module IERS
     Entry = ::Data.define(:x, :y, :mjd, :data_quality) do
       include HasDate
       include HasDataQuality
+
+      # Polar motion rotation matrix W per IERS Conventions 2010, Section 5.4.1:
+      # W = R3(-s') * R2(xp) * R1(yp)
+      #
+      # All elements use exact trigonometry — no small-angle approximation.
+      #
+      # @return [Matrix] 3x3 rotation matrix
+      def rotation_matrix
+        xp = x * ARCSEC_TO_RAD
+        yp = y * ARCSEC_TO_RAD
+        t = (mjd - MJD_J2000) / DAYS_PER_JULIAN_CENTURY
+        sp = S_PRIME_RATE * t * ARCSEC_TO_RAD
+
+        cx, sx = Math.cos(xp), Math.sin(xp)
+        cy, sy = Math.cos(yp), Math.sin(yp)
+        cs, ss = Math.cos(sp), Math.sin(sp)
+
+        Matrix[
+          [cx * cs, cx * ss, sx],
+          [sy * sx * cs - cy * ss, cy * cs + sy * sx * ss, -sy * cx],
+          [-sy * ss - cy * sx * cs, sy * cs - cy * sx * ss, cy * cx]
+        ]
+      end
     end
 
     extend EopParameter
@@ -37,6 +70,17 @@ module IERS
         mjd: query_mjd,
         data_quality: derive_quality(window, :pm_flag)
       )
+    end
+
+    # @param input [Time, Date, DateTime, nil]
+    # @param jd [Float, nil] Julian Date
+    # @param mjd [Float, nil] Modified Julian Date
+    # @param interpolation [Symbol, nil] +:lagrange+ or +:linear+
+    # @return [Matrix] 3x3 polar motion rotation matrix
+    # @raise [OutOfRangeError]
+    def rotation_matrix_at(input = nil, jd: nil, mjd: nil, interpolation: nil)
+      at(input, jd: jd, mjd: mjd, interpolation: interpolation)
+        .rotation_matrix
     end
 
     # @param start_date [Date]
