@@ -72,6 +72,13 @@ result = IERS::Data.update!
 result.success? # => true
 ```
 
+You can also update a single source:
+
+```ruby
+IERS::Data.update!(:finals)
+IERS::Data.update!(:leap_seconds)
+```
+
 Downloaded files are cached in `~/.cache/iers/` by default and take precedence
 over the bundled snapshot.
 
@@ -221,6 +228,12 @@ List all leap seconds:
 ```ruby
 IERS::LeapSecond.all
 # => [#<data IERS::LeapSecond::Entry effective_date=#<Date: 1972-01-01>, tai_utc=10.0>, ...]
+```
+
+Check for a future scheduled leap second:
+
+```ruby
+IERS::LeapSecond.next_scheduled  # => #<data IERS::LeapSecond::Entry ...> or nil
 ```
 
 ### Time input
