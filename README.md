@@ -258,6 +258,15 @@ Check for a future scheduled leap second:
 IERS::LeapSecond.next_scheduled  # => #<data IERS::LeapSecond::Entry ...> or nil
 ```
 
+### TAI
+
+Convert between UTC and TAI time scales:
+
+```ruby
+tai_mjd = IERS::TAI.utc_to_tai(Time.utc(2017, 1, 1))  # => MJD in TAI
+utc_mjd = IERS::TAI.tai_to_utc(mjd: tai_mjd)           # => MJD in UTC
+```
+
 ### Time input
 
 All query methods accept Ruby `Time`, `Date`, and `DateTime` objects as
