@@ -199,6 +199,19 @@ the equinox-based polynomial evaluated at TT:
 IERS::GMST.at(Time.utc(2020, 6, 15))  # => radians, in [0, 2π)
 ```
 
+### Terrestrial rotation matrix
+
+Compute R(ERA) × W, the rotation from ITRS to TIRS (IERS Conventions 2010,
+eq. 5.1), combining the Earth Rotation Angle and the polar motion matrix (W):
+
+```ruby
+r = IERS::TerrestrialRotation.at(Time.utc(2020, 6, 15))
+r.length     # => 3
+r[0].length  # => 3
+```
+
+Returns a 3×3 nested `Array` (row-major).
+
 ### Earth Orientation Parameters (unified)
 
 Query all EOP components at once:
