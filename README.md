@@ -167,10 +167,18 @@ entry.observed?      # => true
 
 ### Delta T
 
-Compute Delta T (TT − UT1), available from 1972 onward:
+Compute Delta T (TT − UT1). From 1972 onward the value is derived from IERS
+data; before 1972 (back to 1800) it uses Espenak & Meeus polynomial
+approximations:
 
 ```ruby
-IERS::DeltaT.at(Time.utc(2020, 6, 15))  # => ~69.36 (seconds)
+entry = IERS::DeltaT.at(Time.utc(2020, 6, 15))
+entry.delta_t    # => ~69.36 (seconds)
+entry.measured?  # => true
+
+entry = IERS::DeltaT.at(Time.utc(1900, 6, 15))
+entry.delta_t    # => ~-2.12 (seconds)
+entry.estimated? # => true
 ```
 
 ### Earth Rotation Angle
