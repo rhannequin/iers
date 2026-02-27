@@ -306,10 +306,14 @@ IERS.reset!
 
 All errors inherit from `IERS::Error`:
 
+- `IERS::DataError`: base for data-related errors
+  - `IERS::ParseError`: malformed data file
+  - `IERS::FileNotFoundError`: data file not found
+  - `IERS::StaleDataError`: predictions don't extend far enough
+- `IERS::DownloadError`: base for download-related errors
+  - `IERS::NetworkError`: HTTP or connection failure
+  - `IERS::ValidationError`: downloaded file failed validation
 - `IERS::OutOfRangeError` — query outside data coverage
-- `IERS::StaleDataError` — predictions don't extend far enough
-- `IERS::FileNotFoundError` — data file not downloaded yet
-- `IERS::NetworkError` — download failure
 - `IERS::ConfigurationError` — invalid configuration
 
 ## Development
