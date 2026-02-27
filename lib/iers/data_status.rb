@@ -8,5 +8,15 @@ module IERS
     def cached?
       source == :cached
     end
+
+    # @return [Boolean]
+    def bundled?
+      source == :bundled
+    end
+
+    # @return [Boolean]
+    def custom?
+      source == :custom
+    end
   end
 end
