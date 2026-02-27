@@ -96,7 +96,8 @@ pm.y          # => 0.456571... (arcseconds)
 pm.observed?  # => true
 ```
 
-Retrieve daily grid values over a date range:
+Retrieve daily grid values over a date range. `between` returns a lazy
+`Enumerator`, so entries are computed on demand:
 
 ```ruby
 entries = IERS::PolarMotion.between(
