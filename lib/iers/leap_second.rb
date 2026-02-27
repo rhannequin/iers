@@ -6,23 +6,28 @@ module IERS
     # @attr tai_utc [Integer] cumulative TAI−UTC offset in seconds
     Entry = ::Data.define(:effective_date, :tai_utc)
 
+    @mutex = Mutex.new
     @all = nil
 
     module_function
 
     # @return [Array<Entry>]
     def all
-      @all ||= IERS::Data.leap_second_entries.map do |parser_entry|
-        Entry.new(
-          effective_date: parser_entry.date,
-          tai_utc: parser_entry.tai_utc
-        )
-      end.freeze
+      @mutex.synchronize do
+        @all ||= IERS::Data.leap_second_entries.map do |parser_entry|
+          Entry.new(
+            effective_date: parser_entry.date,
+            tai_utc: parser_entry.tai_utc
+          )
+        end.freeze
+      end
     end
 
     # @return [void]
     def clear_cached!
-      @all = nil
+      @mutex.synchronize do
+        @all = nil
+      end
     end
 
     # @return [Entry, nil]
