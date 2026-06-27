@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.1 - 2026-06-27
+
+### Changed
+
+- Refreshed the bundled `finals2000A.all` snapshot from IERS. Final values now
+  extend through 2026-06-25 (previously 2026-02-19) and predictions through
+  2027-08-22.
+
 ## 0.1.0 - 2026-02-27
 
 Initial public release.
