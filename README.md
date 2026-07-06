@@ -358,6 +358,9 @@ release a new version, update the version number in `version.rb`, and then run
 `bundle exec rake release`, which will create a git tag for the version, push
 git commits and the created tag, and push the `.gem` file to [rubygems.org].
 
+To refresh the bundled snapshot in `data/`, run `bundle exec rake data:update`.
+A monthly workflow runs this and opens a pull request automatically.
+
 ## License
 
 The gem is available as open source under the terms of the [MIT License].
