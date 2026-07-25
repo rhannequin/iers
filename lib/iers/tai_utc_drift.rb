@@ -25,6 +25,9 @@ module IERS
     # 1961-01-01. Below this there is no published UTC, so TAI-UTC is undefined.
     FIRST_MJD = 37_300
 
+    # 1972-01-01, where Leap_Second.dat takes over. The drift era stops here.
+    LAST_MJD = 41_317
+
     module_function
 
     # @param mjd [Numeric]
@@ -36,14 +39,15 @@ module IERS
         (Rational(mjd) - segment.reference_mjd) * segment.rate
     end
 
-    # Guards the lower bound only. Callers reach this module solely on the
-    # +query_mjd < first_mjd+ branch of LeapSecond.at, so the upper bound is
-    # already handled by that check.
+    # Whether +at+ has a value for this MJD: 1961-01-01 up to but not including
+    # 1972-01-01, where Leap_Second.dat takes over. A caller with a custom leap
+    # second file starting after 1972 relies on the upper bound to fall through
+    # to its own error rather than reading a stale drift value.
     #
     # @param mjd [Numeric]
     # @return [Boolean]
     def covers?(mjd)
-      mjd >= FIRST_MJD
+      mjd >= FIRST_MJD && mjd < LAST_MJD
     end
 
     SEGMENTS = [

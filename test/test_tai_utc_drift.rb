@@ -75,6 +75,14 @@ class TestTaiUtcDrift < Minitest::Test
     assert IERS::TaiUtcDrift.covers?(37_300)
   end
 
+  def test_covers_is_false_at_the_drift_era_end
+    refute IERS::TaiUtcDrift.covers?(41_317)
+  end
+
+  def test_covers_is_false_after_the_drift_era
+    refute IERS::TaiUtcDrift.covers?(45_000)
+  end
+
   def test_first_mjd_is_1961_01_01
     assert_equal 37_300, IERS::TaiUtcDrift::FIRST_MJD
   end
