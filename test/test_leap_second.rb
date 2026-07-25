@@ -212,11 +212,8 @@ end
 class TestLeapSecondFileMetadata < Minitest::Test
   EXPIRY = Date.new(2026, 12, 28)
 
-  # Configure before any read: IERS.configure does not clear memoized data.
   def setup
-    IERS.configure do |config|
-      config.leap_second_path = fixture_path("leap_second_with_metadata.dat")
-    end
+    use_fixture("leap_second_with_metadata.dat")
   end
 
   def teardown
@@ -227,6 +224,8 @@ class TestLeapSecondFileMetadata < Minitest::Test
     Pathname(__dir__).join("fixtures", name)
   end
 
+  # Resets first: IERS.configure alone does not clear memoized data, so without
+  # the reset a table loaded by an earlier test would leak into this one.
   def use_fixture(name)
     IERS.reset_configuration!
     IERS.configure { |config| config.leap_second_path = fixture_path(name) }
