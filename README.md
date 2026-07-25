@@ -263,7 +263,7 @@ List all leap seconds:
 
 ```ruby
 IERS::LeapSecond.all
-# => [#<data IERS::LeapSecond::Entry effective_date=#<Date: 1972-01-01>, tai_utc=10.0>, ...]
+# => [#<data IERS::LeapSecond::Entry effective_date=#<Date: 1972-01-01>, tai_utc=10>, ...]
 ```
 
 Check for a future scheduled leap second:
