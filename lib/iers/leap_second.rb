@@ -30,6 +30,25 @@ module IERS
       end
     end
 
+    # @return [Date, nil]
+    def expires_on
+      IERS::Data.leap_second_metadata.expires_on
+    end
+
+    # @param as_of [Date]
+    # @return [Boolean]
+    def expired?(as_of: Date.today)
+      expiry = expires_on
+      return false if expiry.nil?
+
+      as_of > expiry
+    end
+
+    # @return [String, nil]
+    def updated_through
+      IERS::Data.leap_second_metadata.updated_through
+    end
+
     # @return [Entry, nil]
     def next_scheduled
       today = Date.today
