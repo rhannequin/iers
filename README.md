@@ -242,8 +242,22 @@ entries = IERS::EOP.between(
 Look up TAI−UTC at a given date:
 
 ```ruby
-IERS::LeapSecond.at(Time.utc(2017, 1, 1))  # => 37.0 (seconds)
+IERS::LeapSecond.at(Time.utc(2017, 1, 1))  # => 37 (seconds)
 ```
+
+`at` covers 1961-01-01 onward. From 1972 it returns a whole number of seconds
+as an `Integer`. Between 1961 and 1972, UTC was steered by small rate
+adjustments rather than whole leap seconds, so TAI−UTC was a fraction of a
+second that changed daily. `at` returns those values as exact `Rational`s:
+
+```ruby
+IERS::LeapSecond.at(mjd: 38_900)       # => (1910137/500000)
+IERS::LeapSecond.at(mjd: 38_900).to_f  # => 3.820274 (seconds, 1965-05-20)
+```
+
+The coefficients for that era are fixed and will never change, so they are
+bundled in the gem rather than downloaded. Anything before 1961-01-01 has no
+published UTC and raises `OutOfRangeError`.
 
 List all leap seconds:
 

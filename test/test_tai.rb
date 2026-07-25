@@ -53,9 +53,16 @@ class TestTAIUtcToTai < Minitest::Test
     assert_in_delta expected, IERS::TAI.utc_to_tai(mjd: utc_mjd), 1e-15
   end
 
-  def test_before_data_raises_out_of_range_error
+  def test_pre_1972_uses_the_drift_table
+    # 1965-05-20, MJD 38900: TAI−UTC is 3.820274 s in the drift era.
+    expected = 38_900.0 + 3.820274 / 86_400.0
+
+    assert_in_delta expected, IERS::TAI.utc_to_tai(mjd: 38_900.0), 1e-12
+  end
+
+  def test_before_1961_raises_out_of_range_error
     assert_raises(IERS::OutOfRangeError) do
-      IERS::TAI.utc_to_tai(mjd: 41316.0)
+      IERS::TAI.utc_to_tai(mjd: 37_299.0)
     end
   end
 end

@@ -55,11 +55,16 @@ module IERS
       all.find { |entry| entry.effective_date > today }
     end
 
+    # TAI−UTC covers 1961-01-01 onward. From 1972 the value is a whole number
+    # of seconds read from Leap_Second.dat and returned as an Integer. Between
+    # 1961 and 1972 UTC was steered by rate adjustments rather than whole leap
+    # seconds, so the value is a fraction of a second returned as a Rational.
+    #
     # @param input [Time, Date, DateTime, nil]
     # @param jd [Float, nil] Julian Date
     # @param mjd [Float, nil] Modified Julian Date
-    # @return [Integer] TAI−UTC in seconds
-    # @raise [OutOfRangeError]
+    # @return [Integer, Rational] TAI−UTC in seconds
+    # @raise [OutOfRangeError] before 1961-01-01
     def at(input = nil, jd: nil, mjd: nil)
       query_mjd = TimeScale.to_mjd(input, jd: jd, mjd: mjd)
       parser_entries = IERS::Data.leap_second_entries
@@ -68,11 +73,14 @@ module IERS
       last_mjd = parser_entries.last.mjd
 
       if query_mjd < first_mjd
+        return TaiUtcDrift.at(query_mjd) if TaiUtcDrift.covers?(query_mjd)
+
         raise OutOfRangeError.new(
-          "Requested MJD #{query_mjd} is before the first leap second " \
-          "entry (MJD #{first_mjd})",
+          "Requested MJD #{query_mjd} is before TAI−UTC was defined " \
+          "(MJD #{TaiUtcDrift::FIRST_MJD}, 1961-01-01; no published UTC " \
+          "before then)",
           requested_mjd: query_mjd,
-          available_range: first_mjd..last_mjd
+          available_range: TaiUtcDrift::FIRST_MJD..last_mjd
         )
       end
 

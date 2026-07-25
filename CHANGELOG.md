@@ -10,6 +10,13 @@
   the rest of the comment lines. Unlike `Data.status.cache_age`, which measures
   when a file was downloaded, these describe how long the data itself stays
   authoritative.
+- `LeapSecond.at` now answers 1961-01-01 through 1972-01-01, the era when UTC
+  was steered by rate adjustments rather than whole leap seconds. It returns
+  those values as exact `Rational`s. The coefficients come from the USNO
+  `tai-utc.dat` file and are bundled in source, since they are fixed. The
+  change is additive: the pre-1972 range previously raised, so no successful
+  call returns anything different. `TAI.utc_to_tai` and `TAI.tai_to_utc` gain
+  the same range for free.
 
 ### Changed
 
