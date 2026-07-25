@@ -378,6 +378,24 @@ class TestDataCaching < Minitest::Test
     assert_same first, second
   end
 
+  def test_leap_second_table_returns_same_object
+    first = IERS::Data.leap_second_table
+    second = IERS::Data.leap_second_table
+
+    assert_same first, second
+  end
+
+  def test_leap_second_metadata_returns_a_metadata_object
+    assert_instance_of IERS::Parsers::LeapSecond::Metadata,
+      IERS::Data.leap_second_metadata
+  end
+
+  def test_loaded_is_true_after_leap_second_query
+    IERS::Data.leap_second_metadata
+
+    assert_predicate IERS::Data, :loaded?
+  end
+
   def test_loaded_is_false_initially
     refute_predicate IERS::Data, :loaded?
   end

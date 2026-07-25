@@ -1,5 +1,25 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- `LeapSecond.expires_on`, `LeapSecond.expired?` and
+  `LeapSecond.updated_through` expose the expiry date and IERS bulletin that
+  `Leap_Second.dat` states in its header. Both were previously discarded with
+  the rest of the comment lines. Unlike `Data.status.cache_age`, which measures
+  when a file was downloaded, these describe how long the data itself stays
+  authoritative.
+
+### Changed
+
+- `Parsers::LeapSecond.parse` returns a `Table` of `entries` and `metadata`
+  instead of an array of entries. `Parsers` is internal; the public API is
+  unaffected.
+- `Parsers::LeapSecond.parse` no longer raises `Encoding::CompatibilityError`
+  on a file containing invalid UTF-8. Header metadata is read on a best-effort
+  basis and an unreadable data row raises `ParseError` as before.
+
 ## 0.1.1 - 2026-06-27
 
 ### Changed

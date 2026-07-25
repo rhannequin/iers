@@ -5,7 +5,7 @@ require "date"
 module IERS
   module Parsers
     module Finals
-      Entry = Data.define(
+      Entry = ::Data.define(
         :date, :mjd,
         :pm_flag, :pm_x, :pm_x_error, :pm_y, :pm_y_error,
         :ut1_flag, :ut1_utc, :ut1_utc_error,

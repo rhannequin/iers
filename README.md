@@ -258,6 +258,27 @@ Check for a future scheduled leap second:
 IERS::LeapSecond.next_scheduled  # => #<data IERS::LeapSecond::Entry ...> or nil
 ```
 
+#### Leap second file validity
+
+`Leap_Second.dat` states when it stops being authoritative and which IERS
+bulletin it was updated through. Both are read from the file that is actually
+loaded, so a custom or cached file reports its own header:
+
+```ruby
+IERS::LeapSecond.expires_on       # => #<Date: 2026-12-28> or nil
+IERS::LeapSecond.expired?         # => false
+IERS::LeapSecond.updated_through  # => "IERS Bulletin 71 issued in January 2026"
+```
+
+The stated date is itself still valid, so a file expiring on 28 December 2026
+is expired on the 29th. An expired file is not wrong: it means the IERS has
+published a newer one and a leap second may have been announced since.
+
+This is unrelated to `Data.status.cache_age`, which measures when the file was
+downloaded rather than how long it stays valid. A bundled snapshot can be a year
+old and still valid while a file downloaded this morning can be a week from
+expiry.
+
 ### TAI
 
 Convert between UTC and TAI time scales:
@@ -294,6 +315,10 @@ end
 ```
 
 Without `coverage_days_ahead`, the check ensures predictions cover today.
+
+`ensure_fresh!` is about prediction coverage in `finals2000A.all` only. Leap
+second file validity is a separate question, answered by
+`IERS::LeapSecond.expired?`.
 
 ### Data status and cache management
 

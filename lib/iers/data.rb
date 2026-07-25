@@ -11,13 +11,13 @@ module IERS
 
     @mutex = Mutex.new
     @finals = nil
-    @leap_seconds = nil
+    @leap_second_table = nil
 
     module_function
 
     # @return [Boolean]
     def loaded?
-      !@finals.nil? || !@leap_seconds.nil?
+      !@finals.nil? || !@leap_second_table.nil?
     end
 
     # @param sources [Array<Symbol>] data sources to update (default: all)
@@ -96,14 +96,24 @@ module IERS
       end
     end
 
-    # @return [Array<Parsers::LeapSecond::Entry>]
-    def leap_second_entries
+    # @return [Parsers::LeapSecond::Table]
+    def leap_second_table
       @mutex.synchronize do
-        @leap_seconds ||= begin
+        @leap_second_table ||= begin
           path = resolve_read_path(:leap_seconds)
-          Parsers::LeapSecond.parse(path).freeze
+          Parsers::LeapSecond.parse(path)
         end
       end
+    end
+
+    # @return [Array<Parsers::LeapSecond::Entry>]
+    def leap_second_entries
+      leap_second_table.entries
+    end
+
+    # @return [Parsers::LeapSecond::Metadata]
+    def leap_second_metadata
+      leap_second_table.metadata
     end
 
     def resolve_path(source, config = IERS.configuration)
@@ -155,7 +165,7 @@ module IERS
     def clear_loaded!
       @mutex.synchronize do
         @finals = nil
-        @leap_seconds = nil
+        @leap_second_table = nil
       end
     end
 

@@ -208,3 +208,89 @@ class TestLeapSecond < Minitest::Test
     assert_equal 33, IERS::LeapSecond.at(Date.new(2007, 6, 15))
   end
 end
+
+class TestLeapSecondFileMetadata < Minitest::Test
+  EXPIRY = Date.new(2026, 12, 28)
+
+  def setup
+    use_fixture("leap_second_with_metadata.dat")
+  end
+
+  def teardown
+    IERS.reset_configuration!
+  end
+
+  def fixture_path(name)
+    Pathname(__dir__).join("fixtures", name)
+  end
+
+  # Resets first: IERS.configure alone does not clear memoized data, so without
+  # the reset a table loaded by an earlier test would leak into this one.
+  def use_fixture(name)
+    IERS.reset_configuration!
+    IERS.configure { |config| config.leap_second_path = fixture_path(name) }
+  end
+
+  def test_expires_on_reads_the_loaded_file
+    assert_equal EXPIRY, IERS::LeapSecond.expires_on
+  end
+
+  def test_updated_through_reads_the_loaded_file
+    assert_equal "IERS Bulletin 71 issued in January 2026",
+      IERS::LeapSecond.updated_through
+  end
+
+  def test_expires_on_is_nil_when_the_file_states_none
+    use_fixture("leap_second_no_metadata.dat")
+
+    assert_nil IERS::LeapSecond.expires_on
+  end
+
+  def test_updated_through_is_nil_when_the_file_states_none
+    use_fixture("leap_second_no_metadata.dat")
+
+    assert_nil IERS::LeapSecond.updated_through
+  end
+
+  def test_not_expired_the_day_before_expiry
+    refute IERS::LeapSecond.expired?(as_of: EXPIRY - 1)
+  end
+
+  def test_not_expired_on_the_expiry_date_itself
+    refute IERS::LeapSecond.expired?(as_of: EXPIRY)
+  end
+
+  def test_expired_the_day_after_expiry
+    assert IERS::LeapSecond.expired?(as_of: EXPIRY + 1)
+  end
+
+  def test_not_expired_when_the_file_states_no_expiry
+    use_fixture("leap_second_no_metadata.dat")
+
+    refute IERS::LeapSecond.expired?(as_of: Date.new(2999, 1, 1))
+  end
+
+  def test_expired_defaults_to_today
+    use_fixture("leap_second_no_metadata.dat")
+
+    refute_predicate IERS::LeapSecond, :expired?
+  end
+
+  def test_reads_metadata_from_the_bundled_file_when_no_path_is_configured
+    IERS.reset_configuration!
+
+    assert_instance_of Date, IERS::LeapSecond.expires_on
+  end
+
+  def test_unreadable_metadata_still_allows_lookups
+    use_fixture("leap_second_bad_metadata.dat")
+
+    assert_equal 11, IERS::LeapSecond.at(Date.new(1972, 7, 1))
+  end
+
+  def test_expires_on_is_nil_for_an_impossible_date
+    use_fixture("leap_second_bad_metadata.dat")
+
+    assert_nil IERS::LeapSecond.expires_on
+  end
+end
