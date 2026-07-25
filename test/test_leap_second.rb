@@ -127,26 +127,26 @@ class TestLeapSecond < Minitest::Test
       IERS::LeapSecond.at(Time.utc(2017, 1, 1))
   end
 
-  def test_at_before_1972_raises_out_of_range_error
+  def test_at_before_1961_raises_out_of_range_error
     assert_raises(IERS::OutOfRangeError) do
-      IERS::LeapSecond.at(Time.utc(1971, 12, 31))
+      IERS::LeapSecond.at(mjd: 37_299)
     end
   end
 
-  def test_at_before_1972_error_has_requested_mjd
+  def test_at_before_1961_error_has_requested_mjd
     error = assert_raises(IERS::OutOfRangeError) do
-      IERS::LeapSecond.at(Time.utc(1971, 12, 31))
+      IERS::LeapSecond.at(mjd: 37_299)
     end
 
-    assert_in_delta 41316.0, error.requested_mjd
+    assert_in_delta 37299.0, error.requested_mjd
   end
 
-  def test_at_before_1972_error_has_available_range
+  def test_at_before_1961_error_has_available_range
     error = assert_raises(IERS::OutOfRangeError) do
-      IERS::LeapSecond.at(Time.utc(1971, 12, 31))
+      IERS::LeapSecond.at(mjd: 37_299)
     end
 
-    assert_equal 41317.0..57754.0, error.available_range
+    assert_equal 37300..57754.0, error.available_range
   end
 
   def test_next_scheduled_returns_nil_when_no_future_entries
@@ -206,6 +206,39 @@ class TestLeapSecond < Minitest::Test
 
   def test_at_between_2006_and_2009
     assert_equal 33, IERS::LeapSecond.at(Date.new(2007, 6, 15))
+  end
+
+  def test_at_on_first_leap_second_entry_is_an_integer
+    assert_instance_of Integer, IERS::LeapSecond.at(mjd: 41_317)
+  end
+
+  def test_at_on_first_leap_second_entry_reads_the_file_value
+    assert_equal 10, IERS::LeapSecond.at(mjd: 41_317)
+  end
+
+  def test_at_just_before_1972_comes_from_the_drift_table
+    assert_kind_of Rational, IERS::LeapSecond.at(mjd: 41_316)
+  end
+
+  def test_at_just_before_1972_is_near_ten
+    assert_in_delta 9.88965, IERS::LeapSecond.at(mjd: 41_316).to_f, 1e-5
+  end
+
+  # The drift table and Leap_Second.dat meet at MJD 41317 with the same value.
+  def test_drift_table_joins_the_file_at_1972
+    assert_equal IERS::LeapSecond.at(mjd: 41_317),
+      IERS::TaiUtcDrift.at(41_317)
+  end
+
+  def test_at_on_first_drift_mjd_is_exact
+    assert_equal Rational(14_228_180, 10_000_000),
+      IERS::LeapSecond.at(mjd: 37_300)
+  end
+
+  def test_at_in_the_drift_era_matches_a_time_input
+    # 1965-05-20, MJD 38900
+    assert_equal IERS::LeapSecond.at(mjd: 38_900),
+      IERS::LeapSecond.at(Time.utc(1965, 5, 20))
   end
 end
 
