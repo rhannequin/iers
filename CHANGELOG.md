@@ -35,9 +35,9 @@
   governs; `interpolation`, `sources` and `download_timeout` leave the parse
   in place, since they do not change which file is read.
 
-- `Data.update!` drops the parse for the sources it downloaded. It replaced
-  the files on disk but left the old contents in memory, so a process that had
-  already read them carried on with the pre-download data.
+- `Data.update!` drops the parse for each source as soon as it downloads it.
+  It replaced the files on disk but left the old contents in memory, so a
+  process that had already read them carried on with the pre-download data.
 
 ## 0.2.0 - 2026-07-25
 

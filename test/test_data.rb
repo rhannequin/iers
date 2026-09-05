@@ -531,6 +531,27 @@ class TestDataStaleness < Minitest::Test
     assert_predicate IERS::Data, :loaded?
   end
 
+  def test_update_refreshes_a_source_even_if_a_later_one_aborts
+    dir = Pathname(Dir.mktmpdir("iers-test"))
+    FileUtils.cp(fixture_path("finals_10_days.dat"), dir.join("finals2000A.all"))
+    IERS.configure { |c| c.cache_dir = dir }
+
+    assert_equal 10, IERS::Data.finals_entries.size
+
+    stub_request(
+      :get,
+      "https://datacenter.iers.org/data/latestVersion/finals.all.iau2000.txt"
+    ).to_return(status: 200, body: fixture_path("finals_sample.dat").read)
+
+    assert_raises(IERS::ConfigurationError) do
+      IERS::Data.update!(:finals, :nonexistent)
+    end
+
+    refute_equal 10, IERS::Data.finals_entries.size
+  ensure
+    FileUtils.remove_entry(dir) if dir
+  end
+
   def test_unrelated_settings_keep_the_parse
     IERS.configure { |c| c.finals_path = fixture_path("finals_10_days.dat") }
     IERS::Data.finals_entries

@@ -278,8 +278,9 @@ class TestDeltaTTruncatedSeries < Minitest::Test
 end
 
 class TestDeltaTEmptySeries < Minitest::Test
-  # An unparseable or truncated finals file must not take the polynomial down
-  # with it: dates before 1986 never needed the EOP series to begin with.
+  # A finals file with no rows parses fine and simply covers nothing, so the
+  # polynomial still answers the dates it owns outright. A file that will not
+  # parse at all is a different case: see TestDeltaTMalformedSeries.
   def setup
     @empty = Tempfile.new(["finals_empty", ".dat"])
 
@@ -305,5 +306,26 @@ class TestDeltaTEmptySeries < Minitest::Test
     end
 
     assert_nil error.available_range
+  end
+end
+
+class TestDeltaTMalformedSeries < Minitest::Test
+  # A finals file that will not parse is a broken configuration, and the gem
+  # says so rather than quietly downgrading to estimates. Source selection
+  # consults the series for every query, so a pre-1986 date surfaces it too.
+  def setup
+    IERS.configure do |config|
+      config.finals_path = Pathname(__dir__).join("fixtures", "finals_malformed.dat")
+    end
+  end
+
+  def teardown
+    IERS.reset_configuration!
+  end
+
+  def test_polynomial_date_still_reports_the_parse_error
+    assert_raises(IERS::ParseError) do
+      IERS::DeltaT.at(Date.new(1900, 1, 1))
+    end
   end
 end

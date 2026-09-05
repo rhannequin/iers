@@ -37,12 +37,11 @@ module IERS
         begin
           Downloader.new(timeout: config.download_timeout).fetch(url, dest)
           updated << source
+          clear_loaded!(source)
         rescue DownloadError => e
           errors[source] = e
         end
       end
-
-      clear_loaded!(*updated) unless updated.empty?
 
       UpdateResult.new(updated_files: updated, errors: errors)
     end
