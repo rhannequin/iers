@@ -29,6 +29,7 @@ jobs:
         with:
           branch: auto/update-iers-data
           delete-branch: true
+          add-paths: data
           title: "Update `data/` with latest values from IERS"
           commit-message: "Update data with latest values from IERS"
           body: |
