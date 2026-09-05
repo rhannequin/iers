@@ -42,6 +42,8 @@ module IERS
         end
       end
 
+      clear_loaded!(*updated) unless updated.empty?
+
       UpdateResult.new(updated_files: updated, errors: errors)
     end
 
@@ -161,12 +163,19 @@ module IERS
       (Time.now - mtimes.min).to_i
     end
 
+    # @param sources [Array<Symbol>] data sources to drop (default: all)
     # @return [void]
-    def clear_loaded!
+    def clear_loaded!(*sources)
+      sources = FILENAMES.keys if sources.empty?
+
       @mutex.synchronize do
-        @finals = nil
-        @leap_second_table = nil
+        @finals = nil if sources.include?(:finals)
+        @leap_second_table = nil if sources.include?(:leap_seconds)
       end
+
+      # Outside the mutex above: LeapSecond takes its own lock before calling
+      # back into Data, so taking them in that order here would invert it.
+      LeapSecond.clear_cached! if sources.include?(:leap_seconds)
     end
 
     private_class_method :resolve_path,

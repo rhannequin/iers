@@ -39,6 +39,7 @@ module IERS
 
     def cache_dir=(value)
       @cache_dir = Pathname(value)
+      Data.clear_loaded!
     end
 
     def sources=(value)
@@ -59,10 +60,12 @@ module IERS
 
     def finals_path=(value)
       @finals_path = value && Pathname(value)
+      Data.clear_loaded!(:finals)
     end
 
     def leap_second_path=(value)
       @leap_second_path = value && Pathname(value)
+      Data.clear_loaded!(:leap_seconds)
     end
 
     def interpolation=(value)

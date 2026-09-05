@@ -460,3 +460,87 @@ class TestEnsureFresh < Minitest::Test
     assert_equal Date.today + 90, err.required_until
   end
 end
+
+class TestDataStaleness < Minitest::Test
+  def setup
+    IERS.reset_configuration!
+  end
+
+  def teardown
+    IERS.reset_configuration!
+  end
+
+  def fixture_path(name)
+    Pathname(__dir__).join("fixtures", name)
+  end
+
+  def test_reconfiguring_finals_path_reloads
+    IERS.configure { |c| c.finals_path = fixture_path("finals_10_days.dat") }
+
+    assert_equal 10, IERS::Data.finals_entries.size
+
+    IERS.configure { |c| c.finals_path = fixture_path("finals_sample.dat") }
+
+    refute_equal 10, IERS::Data.finals_entries.size
+  end
+
+  def test_mutating_the_configuration_directly_reloads
+    IERS.configure { |c| c.finals_path = fixture_path("finals_10_days.dat") }
+
+    assert_equal 10, IERS::Data.finals_entries.size
+
+    IERS.configuration.finals_path = fixture_path("finals_sample.dat")
+
+    refute_equal 10, IERS::Data.finals_entries.size
+  end
+
+  def test_clearing_finals_path_reloads
+    IERS.configure { |c| c.finals_path = fixture_path("finals_10_days.dat") }
+
+    assert_equal 10, IERS::Data.finals_entries.size
+
+    IERS.configure { |c| c.finals_path = nil }
+
+    refute_equal 10, IERS::Data.finals_entries.size
+  end
+
+  def test_cache_dir_reloads
+    IERS.configure { |c| c.finals_path = fixture_path("finals_10_days.dat") }
+    IERS::Data.finals_entries
+
+    IERS.configure { |c| c.cache_dir = Pathname(Dir.mktmpdir) }
+
+    refute_predicate IERS::Data, :loaded?
+  end
+
+  def test_leap_second_path_drops_the_leap_second_cache
+    IERS.configure { |c| c.leap_second_path = fixture_path("leap_second_query.dat") }
+    before = IERS::LeapSecond.all
+
+    IERS.configure { |c| c.leap_second_path = fixture_path("leap_second_sample.dat") }
+
+    refute_equal before, IERS::LeapSecond.all
+  end
+
+  def test_finals_path_leaves_the_leap_second_table_alone
+    IERS.configure { |c| c.leap_second_path = fixture_path("leap_second_query.dat") }
+    IERS::LeapSecond.all
+
+    IERS.configure { |c| c.finals_path = fixture_path("finals_10_days.dat") }
+
+    assert_predicate IERS::Data, :loaded?
+  end
+
+  def test_unrelated_settings_keep_the_parse
+    IERS.configure { |c| c.finals_path = fixture_path("finals_10_days.dat") }
+    IERS::Data.finals_entries
+
+    IERS.configure do |c|
+      c.interpolation = :linear
+      c.download_timeout = 60
+      c.lagrange_order = 6
+    end
+
+    assert_predicate IERS::Data, :loaded?
+  end
+end

@@ -28,6 +28,17 @@
   Where the polynomial and the series meet in the bundled data they differ by
   about 61 ms, well inside the polynomial's own error in that era.
 
+- Pointing the gem at a different data file now takes effect. `finals_path`,
+  `leap_second_path` and `cache_dir` memoised their parse on first read and
+  never dropped it, so setting any of them after a lookup kept serving the
+  previous file until `IERS.reset!`. Each now invalidates just the data it
+  governs; `interpolation`, `sources` and `download_timeout` leave the parse
+  in place, since they do not change which file is read.
+
+- `Data.update!` drops the parse for the sources it downloaded. It replaced
+  the files on disk but left the old contents in memory, so a process that had
+  already read them carried on with the pre-download data.
+
 ## 0.2.0 - 2026-07-25
 
 ### Added
