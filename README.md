@@ -167,9 +167,10 @@ entry.observed?      # => true
 
 ### Delta T
 
-Compute Delta T (TT − UT1). From 1972 onward the value is derived from IERS
-data; before 1972 (back to 1800) it uses Espenak & Meeus polynomial
-approximations:
+Compute Delta T (TT − UT1). Wherever the loaded EOP series reaches, the value is
+derived from IERS data. Outside it, Espenak & Meeus polynomial approximations
+cover 1800 to 1986. The bundled series starts at MJD 41684 (1973-01-02), so
+earlier dates are estimated; `measured?` and `estimated?` say which you got:
 
 ```ruby
 entry = IERS::DeltaT.at(Time.utc(2020, 6, 15))

@@ -14,11 +14,11 @@ module IERS
     end
 
     EARLIEST_YEAR = 1800.0
-    PRE_1972_MJD = 41317.0
+    LATEST_POLYNOMIAL_YEAR = 1986.0
     DAYS_PER_JULIAN_YEAR = 365.25
     YEAR_J2000 = 2000.0
 
-    # Espenak & Meeus (2014) polynomial segments for 1800–1972.
+    # Espenak & Meeus (2014) polynomial segments for 1800–1986.
     # Each segment: [year_start, year_end, epoch, coefficients]
     # ΔT = c₀ + c₁·t + c₂·t² + ... where t = y − epoch
     # Reference: https://eclipsewise.com/help/deltatpoly2014.html
@@ -46,7 +46,7 @@ module IERS
     ].freeze
 
     private_constant :EARLIEST_YEAR,
-      :PRE_1972_MJD,
+      :LATEST_POLYNOMIAL_YEAR,
       :DAYS_PER_JULIAN_YEAR,
       :YEAR_J2000,
       :POLYNOMIALS
@@ -69,22 +69,55 @@ module IERS
         )
       end
 
-      if query_mjd < PRE_1972_MJD
-        Entry.new(
-          delta_t: polynomial_delta_t(y),
-          mjd: query_mjd,
-          source: :estimated
-        )
+      if series_covers?(query_mjd)
+        measured_entry(query_mjd)
+      elsif y <= LATEST_POLYNOMIAL_YEAR
+        estimated_entry(query_mjd, y)
       else
-        tai_utc = LeapSecond.at(mjd: query_mjd)
-        ut1_utc = UT1.at(mjd: query_mjd).ut1_utc
-
-        Entry.new(
-          delta_t: tai_utc + TimeScale::TT_TAI - ut1_utc,
-          mjd: query_mjd,
-          source: :measured
-        )
+        raise_uncovered!(query_mjd)
       end
+    end
+
+    # The EOP series is the better source wherever it reaches, so it is asked
+    # first; the polynomial covers whatever is left within its own validity.
+    def series_covers?(mjd)
+      entries = Data.finals_entries
+      return false if entries.empty?
+
+      mjd.between?(entries.first.mjd, entries.last.mjd)
+    end
+
+    def estimated_entry(query_mjd, y)
+      Entry.new(
+        delta_t: polynomial_delta_t(y),
+        mjd: query_mjd,
+        source: :estimated
+      )
+    end
+
+    def raise_uncovered!(query_mjd)
+      entries = Data.finals_entries
+      range = (entries.first.mjd..entries.last.mjd unless entries.empty?)
+      series = range ? "covers #{range}" : "is empty"
+
+      raise OutOfRangeError.new(
+        "No DeltaT available for MJD #{query_mjd}: the polynomial covers " \
+        "#{EARLIEST_YEAR.to_i}–#{LATEST_POLYNOMIAL_YEAR.to_i} and the EOP " \
+        "series #{series}",
+        requested_mjd: query_mjd,
+        available_range: range
+      )
+    end
+
+    def measured_entry(query_mjd)
+      tai_utc = LeapSecond.at(mjd: query_mjd)
+      ut1_utc = UT1.at(mjd: query_mjd).ut1_utc
+
+      Entry.new(
+        delta_t: tai_utc + TimeScale::TT_TAI - ut1_utc,
+        mjd: query_mjd,
+        source: :measured
+      )
     end
 
     def polynomial_delta_t(y)
@@ -97,6 +130,11 @@ module IERS
       YEAR_J2000 + (mjd - TimeScale::MJD_J2000) / DAYS_PER_JULIAN_YEAR
     end
 
-    private_class_method :polynomial_delta_t, :mjd_to_decimal_year
+    private_class_method :series_covers?,
+      :estimated_entry,
+      :raise_uncovered!,
+      :measured_entry,
+      :polynomial_delta_t,
+      :mjd_to_decimal_year
   end
 end
