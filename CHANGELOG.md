@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.0 - 2026-09-06
 
 ### Fixed
 
@@ -19,8 +19,8 @@
 
   Two consequences for a series that does not span the query. A date past the
   end of a short series now returns a polynomial estimate if it falls before
-  1986, where it used to raise; this cannot arise with the bundled data, whose
-  predictions run years ahead. And a date outside both sources now raises with
+  1986, where it used to raise; this cannot arise with the bundled data, which
+  ends decades beyond 1986. And a date outside both sources now raises with
   a message naming the polynomial range and the series range, instead of the
   EOP range alone, which read as if the caller had asked for something out of
   range when the polynomial covered it.
@@ -43,6 +43,26 @@
 - `Data.update!` drops the parse for each source as soon as it downloads it.
   It replaced the files on disk but left the old contents in memory, so a
   process that had already read them carried on with the pre-download data.
+
+- `OutOfRangeError` raised by `DeltaT.at` no longer carries an
+  `available_range`. What the gem can answer is two disjoint spans, and naming
+  one of them in a field called available range is the same thing that made the
+  old message misleading. The message names both spans; `requested_mjd` is
+  unchanged.
+
+- `Data.clear_loaded!` raises `ConfigurationError` for a source it does not
+  recognise, rather than clearing nothing and reporting success.
+
+- `DeltaT.at` consults the EOP series for every query, so a finals file that
+  fails to parse now raises `ParseError` even for a date the polynomial owns
+  outright, where it used to answer without reading the file. A file that
+  parses to no rows is a series covering nothing and still falls back to the
+  polynomial. A corrupt data file is worth surfacing whichever query reaches
+  it.
+
+- Refreshed the bundled `finals2000A.all` and `Leap_Second.dat` snapshots from
+  IERS. Final values now extend through 2026-08-27 (previously 2026-06-25) and
+  predictions through 2027-09-04 (previously 2027-07-03).
 
 ## 0.2.0 - 2026-07-25
 
