@@ -69,20 +69,88 @@ class TestDeltaTAt < Minitest::Test
     refute_predicate result, :estimated?
   end
 
-  def test_before_data_raises_out_of_range_error
-    assert_raises(IERS::OutOfRangeError) do
-      IERS::DeltaT.at(mjd: 41683.0)
-    end
+  def test_before_data_falls_back_to_polynomial
+    result = IERS::DeltaT.at(mjd: 41683.0)
+
+    assert_equal :estimated, result.source
   end
 
-  def test_after_data_raises_out_of_range_error
+  def test_fallback_is_symmetric_around_the_series
+    before = IERS::DeltaT.at(mjd: 41683.0)
+    after = IERS::DeltaT.at(mjd: 41694.0)
+
+    assert_equal :estimated, before.source
+    assert_equal :estimated, after.source
+  end
+
+  def test_after_data_falls_back_to_polynomial
+    result = IERS::DeltaT.at(mjd: 41694.0)
+
+    assert_equal :estimated, result.source
+  end
+
+  def test_after_polynomial_range_raises_out_of_range_error
     assert_raises(IERS::OutOfRangeError) do
-      IERS::DeltaT.at(mjd: 41694.0)
+      IERS::DeltaT.at(Date.new(1990, 1, 1))
     end
   end
 end
 
+class TestDeltaTSeriesGap < Minitest::Test
+  # The bundled EOP series starts at MJD 41684 (1973-01-02), but the modern
+  # UTC era starts at MJD 41317 (1972-01-01). Every date in between is covered
+  # by the polynomial rather than left without an answer.
+  SERIES_START_MJD = 41684.0
+
+  def teardown
+    IERS.reset_configuration!
+  end
+
+  def test_first_day_of_1972_is_estimated
+    result = IERS::DeltaT.at(mjd: 41317.0)
+
+    assert_equal :estimated, result.source
+  end
+
+  def test_mid_1972_is_estimated
+    result = IERS::DeltaT.at(Date.new(1972, 7, 1))
+
+    assert_equal :estimated, result.source
+  end
+
+  def test_day_before_series_start_is_estimated
+    result = IERS::DeltaT.at(mjd: SERIES_START_MJD - 1)
+
+    assert_equal :estimated, result.source
+  end
+
+  def test_series_start_is_measured
+    result = IERS::DeltaT.at(mjd: SERIES_START_MJD)
+
+    assert_equal :measured, result.source
+  end
+
+  def test_every_day_of_1972_has_a_value
+    (41317..41683).each do |mjd|
+      assert_instance_of Float, IERS::DeltaT.at(mjd: mjd.to_f).delta_t
+    end
+  end
+
+  def test_step_at_the_seam_is_small
+    # The polynomial and the series disagree by ~61 ms where they meet, well
+    # inside the polynomial's own error in this era.
+    before = IERS::DeltaT.at(mjd: SERIES_START_MJD - 0.5).delta_t
+    after = IERS::DeltaT.at(mjd: SERIES_START_MJD).delta_t
+
+    assert_in_delta before, after, 0.1
+  end
+end
+
 class TestDeltaTEstimated < Minitest::Test
+  def teardown
+    IERS.reset_configuration!
+  end
+
   def test_returns_entry
     result = IERS::DeltaT.at(Date.new(1900, 1, 1))
 
@@ -166,5 +234,107 @@ class TestDeltaTConsistency < Minitest::Test
     expected = tai_utc + 32.184 - ut1_utc
 
     assert_in_delta expected, IERS::DeltaT.at(mjd: mjd).delta_t, 1e-10
+  end
+end
+
+class TestDeltaTTruncatedSeries < Minitest::Test
+  # A finals file that starts after the polynomial's 1986 cutoff leaves a real
+  # gap, which must be reported as a DeltaT problem rather than an EOP one.
+  def setup
+    IERS.configure do |config|
+      config.finals_path = fixture_path("finals_leap_boundary.dat")
+      config.leap_second_path = fixture_path("leap_second_query.dat")
+    end
+  end
+
+  def teardown
+    IERS.reset_configuration!
+  end
+
+  def fixture_path(name)
+    Pathname(__dir__).join("fixtures", name)
+  end
+
+  def test_within_polynomial_range_is_still_estimated
+    result = IERS::DeltaT.at(Date.new(1900, 1, 1))
+
+    assert_equal :estimated, result.source
+  end
+
+  def test_after_polynomial_range_raises_out_of_range_error
+    assert_raises(IERS::OutOfRangeError) do
+      IERS::DeltaT.at(Date.new(1990, 1, 1))
+    end
+  end
+
+  def test_error_message_names_delta_t_not_the_eop_series
+    error = assert_raises(IERS::OutOfRangeError) do
+      IERS::DeltaT.at(Date.new(1990, 1, 1))
+    end
+
+    assert_match(/DeltaT/, error.message)
+    assert_match(/1986/, error.message)
+    assert_match(/EOP series/, error.message)
+  end
+
+  def test_error_carries_no_single_available_range
+    error = assert_raises(IERS::OutOfRangeError) do
+      IERS::DeltaT.at(Date.new(1990, 1, 1))
+    end
+
+    assert_nil error.available_range
+  end
+end
+
+class TestDeltaTEmptySeries < Minitest::Test
+  # A finals file with no rows parses fine and simply covers nothing, so the
+  # polynomial still answers the dates it owns outright. A file that will not
+  # parse at all is a different case: see TestDeltaTMalformedSeries.
+  def setup
+    @empty = Tempfile.new(["finals_empty", ".dat"])
+
+    IERS.configure do |config|
+      config.finals_path = Pathname(@empty.path)
+    end
+  end
+
+  def teardown
+    IERS.reset_configuration!
+    @empty.close!
+  end
+
+  def test_polynomial_still_answers
+    result = IERS::DeltaT.at(Date.new(1900, 1, 1))
+
+    assert_equal :estimated, result.source
+  end
+
+  def test_after_polynomial_range_raises_out_of_range_error
+    error = assert_raises(IERS::OutOfRangeError) do
+      IERS::DeltaT.at(Date.new(1990, 1, 1))
+    end
+
+    assert_nil error.available_range
+  end
+end
+
+class TestDeltaTMalformedSeries < Minitest::Test
+  # A finals file that will not parse is a broken configuration, and the gem
+  # says so rather than quietly downgrading to estimates. Source selection
+  # consults the series for every query, so a pre-1986 date surfaces it too.
+  def setup
+    IERS.configure do |config|
+      config.finals_path = Pathname(__dir__).join("fixtures", "finals_malformed.dat")
+    end
+  end
+
+  def teardown
+    IERS.reset_configuration!
+  end
+
+  def test_polynomial_date_still_reports_the_parse_error
+    assert_raises(IERS::ParseError) do
+      IERS::DeltaT.at(Date.new(1900, 1, 1))
+    end
   end
 end

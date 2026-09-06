@@ -460,3 +460,138 @@ class TestEnsureFresh < Minitest::Test
     assert_equal Date.today + 90, err.required_until
   end
 end
+
+class TestDataStaleness < Minitest::Test
+  def setup
+    IERS.reset_configuration!
+  end
+
+  def teardown
+    IERS.reset_configuration!
+  end
+
+  def fixture_path(name)
+    Pathname(__dir__).join("fixtures", name)
+  end
+
+  def test_reconfiguring_finals_path_reloads
+    IERS.configure { |c| c.finals_path = fixture_path("finals_10_days.dat") }
+
+    assert_equal 10, IERS::Data.finals_entries.size
+
+    IERS.configure { |c| c.finals_path = fixture_path("finals_sample.dat") }
+
+    refute_equal 10, IERS::Data.finals_entries.size
+  end
+
+  def test_mutating_the_configuration_directly_reloads
+    IERS.configure { |c| c.finals_path = fixture_path("finals_10_days.dat") }
+
+    assert_equal 10, IERS::Data.finals_entries.size
+
+    IERS.configuration.finals_path = fixture_path("finals_sample.dat")
+
+    refute_equal 10, IERS::Data.finals_entries.size
+  end
+
+  def test_clearing_finals_path_reloads
+    IERS.configure { |c| c.finals_path = fixture_path("finals_10_days.dat") }
+
+    assert_equal 10, IERS::Data.finals_entries.size
+
+    IERS.configure { |c| c.finals_path = nil }
+
+    refute_equal 10, IERS::Data.finals_entries.size
+  end
+
+  def test_cache_dir_reloads
+    IERS.configure { |c| c.finals_path = fixture_path("finals_10_days.dat") }
+    IERS::Data.finals_entries
+
+    IERS.configure { |c| c.cache_dir = Pathname(Dir.mktmpdir) }
+
+    refute_predicate IERS::Data, :loaded?
+  end
+
+  def test_leap_second_path_drops_the_leap_second_cache
+    IERS.configure { |c| c.leap_second_path = fixture_path("leap_second_query.dat") }
+    before = IERS::LeapSecond.all
+
+    IERS.configure { |c| c.leap_second_path = fixture_path("leap_second_sample.dat") }
+
+    refute_equal before, IERS::LeapSecond.all
+  end
+
+  def test_finals_path_leaves_the_leap_second_table_alone
+    IERS.configure { |c| c.leap_second_path = fixture_path("leap_second_query.dat") }
+    IERS::LeapSecond.all
+
+    IERS.configure { |c| c.finals_path = fixture_path("finals_10_days.dat") }
+
+    assert_predicate IERS::Data, :loaded?
+  end
+
+  def test_update_refreshes_a_source_even_if_a_later_one_aborts
+    dir = Pathname(Dir.mktmpdir("iers-test"))
+    FileUtils.cp(fixture_path("finals_10_days.dat"), dir.join("finals2000A.all"))
+    IERS.configure { |c| c.cache_dir = dir }
+
+    assert_equal 10, IERS::Data.finals_entries.size
+
+    stub_request(
+      :get,
+      "https://datacenter.iers.org/data/latestVersion/finals.all.iau2000.txt"
+    ).to_return(status: 200, body: fixture_path("finals_sample.dat").read)
+
+    assert_raises(IERS::ConfigurationError) do
+      IERS::Data.update!(:finals, :nonexistent)
+    end
+
+    refute_equal 10, IERS::Data.finals_entries.size
+  ensure
+    FileUtils.remove_entry(dir) if dir
+  end
+
+  def test_clear_cache_drops_the_parse_with_the_files
+    dir = Pathname(Dir.mktmpdir("iers-test"))
+    FileUtils.cp(fixture_path("finals_10_days.dat"), dir.join("finals2000A.all"))
+    IERS.configure { |c| c.cache_dir = dir }
+
+    assert_equal 10, IERS::Data.finals_entries.size
+
+    IERS::Data.clear_cache!
+
+    refute_equal 10, IERS::Data.finals_entries.size
+  ensure
+    FileUtils.remove_entry(dir) if dir
+  end
+
+  def test_a_detached_configuration_leaves_the_parse_alone
+    IERS.configure { |c| c.finals_path = fixture_path("finals_10_days.dat") }
+    IERS::Data.finals_entries
+
+    detached = IERS::Configuration.new
+    detached.finals_path = fixture_path("finals_sample.dat")
+
+    assert_predicate IERS::Data, :loaded?
+  end
+
+  def test_clearing_an_unknown_source_raises
+    assert_raises(IERS::ConfigurationError) do
+      IERS::Data.clear_loaded!(:leap_second)
+    end
+  end
+
+  def test_unrelated_settings_keep_the_parse
+    IERS.configure { |c| c.finals_path = fixture_path("finals_10_days.dat") }
+    IERS::Data.finals_entries
+
+    IERS.configure do |c|
+      c.interpolation = :linear
+      c.download_timeout = 60
+      c.lagrange_order = 6
+    end
+
+    assert_predicate IERS::Data, :loaded?
+  end
+end

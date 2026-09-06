@@ -39,6 +39,7 @@ module IERS
 
     def cache_dir=(value)
       @cache_dir = Pathname(value)
+      invalidate
     end
 
     def sources=(value)
@@ -59,10 +60,12 @@ module IERS
 
     def finals_path=(value)
       @finals_path = value && Pathname(value)
+      invalidate(:finals)
     end
 
     def leap_second_path=(value)
       @leap_second_path = value && Pathname(value)
+      invalidate(:leap_seconds)
     end
 
     def interpolation=(value)
@@ -81,6 +84,16 @@ module IERS
       end
 
       @lagrange_order = value
+    end
+
+    private
+
+    # Settings staged on a detached Configuration govern nothing, so they must
+    # not reach into the parse the gem is actually serving.
+    def invalidate(*sources)
+      return unless IERS.active_configuration?(self)
+
+      Data.clear_loaded!(*sources)
     end
   end
 end

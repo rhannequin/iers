@@ -40,11 +40,17 @@ module IERS
       yield configuration
     end
 
+    # @api private
+    # @param candidate [Configuration]
+    # @return [Boolean] whether the gem reads its data through this object
+    def active_configuration?(candidate)
+      @configuration.equal?(candidate)
+    end
+
     # @return [void]
     def reset_configuration!
       @configuration = nil
       Data.clear_loaded!
-      LeapSecond.clear_cached!
     end
 
     # @return [void]

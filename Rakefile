@@ -31,7 +31,6 @@ namespace :data do
       abort "IERS data update failed"
     end
 
-    IERS::Data.clear_loaded!
     IERS::Data.ensure_fresh!(coverage_days_ahead: 90)
     IERS::Data.leap_second_entries
 

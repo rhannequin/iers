@@ -1,5 +1,49 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- `DeltaT.at` answers every date in 1972 again. The switch from the Espenak &
+  Meeus polynomial to measured data was pinned to 1972-01-01, the start of the
+  modern UTC era, but the bundled EOP series only starts at 1973-01-02, so the
+  367 days in between belonged to neither source and raised `OutOfRangeError`.
+
+### Changed
+
+- `DeltaT.at` picks its source by asking what the loaded data actually covers
+  rather than by calendar date. The EOP series is used wherever it reaches, the
+  polynomial covers the rest of 1800–1986, and only a date outside both raises.
+  A configured or extended series therefore moves the seam with it, and no
+  fixed date can drift away from the data behind it again.
+
+  Two consequences for a series that does not span the query. A date past the
+  end of a short series now returns a polynomial estimate if it falls before
+  1986, where it used to raise; this cannot arise with the bundled data, whose
+  predictions run years ahead. And a date outside both sources now raises with
+  a message naming the polynomial range and the series range, instead of the
+  EOP range alone, which read as if the caller had asked for something out of
+  range when the polynomial covered it.
+
+  Where the polynomial and the series meet in the bundled data they differ by
+  about 61 ms, well inside the polynomial's own error in that era.
+
+- Pointing the gem at a different data file now takes effect. `finals_path`,
+  `leap_second_path` and `cache_dir` memoised their parse on first read and
+  never dropped it, so setting any of them after a lookup kept serving the
+  previous file until `IERS.reset!`. Each now invalidates just the data it
+  governs; `interpolation`, `sources` and `download_timeout` leave the parse
+  in place, since they do not change which file is read, and a `Configuration`
+  the gem is not reading through governs nothing.
+
+- `Data.clear_cache!` drops the parse along with the files it deletes. It
+  removed the cached files and left their contents in memory, so the process
+  kept serving a deleted cache while `Data.status` already reported `:bundled`.
+
+- `Data.update!` drops the parse for each source as soon as it downloads it.
+  It replaced the files on disk but left the old contents in memory, so a
+  process that had already read them carried on with the pre-download data.
+
 ## 0.2.0 - 2026-07-25
 
 ### Added
