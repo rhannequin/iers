@@ -33,7 +33,12 @@
   never dropped it, so setting any of them after a lookup kept serving the
   previous file until `IERS.reset!`. Each now invalidates just the data it
   governs; `interpolation`, `sources` and `download_timeout` leave the parse
-  in place, since they do not change which file is read.
+  in place, since they do not change which file is read, and a `Configuration`
+  the gem is not reading through governs nothing.
+
+- `Data.clear_cache!` drops the parse along with the files it deletes. It
+  removed the cached files and left their contents in memory, so the process
+  kept serving a deleted cache while `Data.status` already reported `:bundled`.
 
 - `Data.update!` drops the parse for each source as soon as it downloads it.
   It replaced the files on disk but left the old contents in memory, so a

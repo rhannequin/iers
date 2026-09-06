@@ -68,6 +68,8 @@ module IERS
         path = config.cache_dir.join(filename)
         path.delete if path.exist?
       end
+
+      clear_loaded!
     end
 
     # @param coverage_days_ahead [Integer, nil]
@@ -166,6 +168,7 @@ module IERS
     # @return [void]
     def clear_loaded!(*sources)
       sources = FILENAMES.keys if sources.empty?
+      validate_sources!(sources)
 
       @mutex.synchronize do
         @finals = nil if sources.include?(:finals)
@@ -177,7 +180,17 @@ module IERS
       LeapSecond.clear_cached! if sources.include?(:leap_seconds)
     end
 
-    private_class_method :resolve_path,
+    def validate_sources!(sources)
+      unknown = sources - FILENAMES.keys
+      return if unknown.empty?
+
+      raise ConfigurationError,
+        "Unknown data source: #{unknown.map(&:inspect).join(", ")}. " \
+        "Valid sources: #{FILENAMES.keys.inspect}"
+    end
+
+    private_class_method :validate_sources!,
+      :resolve_path,
       :resolve_read_path,
       :validate_source!,
       :custom_paths_configured?,

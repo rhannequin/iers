@@ -97,15 +97,20 @@ module IERS
 
     def raise_uncovered!(query_mjd)
       entries = Data.finals_entries
-      range = (entries.first.mjd..entries.last.mjd unless entries.empty?)
-      series = range ? "covers #{range}" : "is empty"
+      series =
+        if entries.empty?
+          "is empty"
+        else
+          "covers #{entries.first.mjd}..#{entries.last.mjd}"
+        end
 
+      # No `available_range`: what DeltaT can answer is two disjoint spans, and
+      # naming either one alone is what made the old message misleading.
       raise OutOfRangeError.new(
         "No DeltaT available for MJD #{query_mjd}: the polynomial covers " \
         "#{EARLIEST_YEAR.to_i}–#{LATEST_POLYNOMIAL_YEAR.to_i} and the EOP " \
         "series #{series}",
-        requested_mjd: query_mjd,
-        available_range: range
+        requested_mjd: query_mjd
       )
     end
 

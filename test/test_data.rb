@@ -552,6 +552,36 @@ class TestDataStaleness < Minitest::Test
     FileUtils.remove_entry(dir) if dir
   end
 
+  def test_clear_cache_drops_the_parse_with_the_files
+    dir = Pathname(Dir.mktmpdir("iers-test"))
+    FileUtils.cp(fixture_path("finals_10_days.dat"), dir.join("finals2000A.all"))
+    IERS.configure { |c| c.cache_dir = dir }
+
+    assert_equal 10, IERS::Data.finals_entries.size
+
+    IERS::Data.clear_cache!
+
+    refute_equal 10, IERS::Data.finals_entries.size
+  ensure
+    FileUtils.remove_entry(dir) if dir
+  end
+
+  def test_a_detached_configuration_leaves_the_parse_alone
+    IERS.configure { |c| c.finals_path = fixture_path("finals_10_days.dat") }
+    IERS::Data.finals_entries
+
+    detached = IERS::Configuration.new
+    detached.finals_path = fixture_path("finals_sample.dat")
+
+    assert_predicate IERS::Data, :loaded?
+  end
+
+  def test_clearing_an_unknown_source_raises
+    assert_raises(IERS::ConfigurationError) do
+      IERS::Data.clear_loaded!(:leap_second)
+    end
+  end
+
   def test_unrelated_settings_keep_the_parse
     IERS.configure { |c| c.finals_path = fixture_path("finals_10_days.dat") }
     IERS::Data.finals_entries

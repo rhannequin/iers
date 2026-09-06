@@ -79,7 +79,8 @@ class TestDeltaTAt < Minitest::Test
     before = IERS::DeltaT.at(mjd: 41683.0)
     after = IERS::DeltaT.at(mjd: 41694.0)
 
-    assert_equal before.source, after.source
+    assert_equal :estimated, before.source
+    assert_equal :estimated, after.source
   end
 
   def test_after_data_falls_back_to_polynomial
@@ -274,6 +275,14 @@ class TestDeltaTTruncatedSeries < Minitest::Test
     assert_match(/DeltaT/, error.message)
     assert_match(/1986/, error.message)
     assert_match(/EOP series/, error.message)
+  end
+
+  def test_error_carries_no_single_available_range
+    error = assert_raises(IERS::OutOfRangeError) do
+      IERS::DeltaT.at(Date.new(1990, 1, 1))
+    end
+
+    assert_nil error.available_range
   end
 end
 
