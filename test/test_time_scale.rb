@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "stringio"
 
 class TestTimeScale < Minitest::Test
   # MJD of 1972-01-01 = 41317.0
@@ -82,5 +83,65 @@ class TestTimeScale < Minitest::Test
     result = IERS::TimeScale.to_date(41317.5)
 
     assert_equal Date.new(1972, 1, 1), result
+  end
+
+  # Kernel#Float writes "Integer out of Float range" to stderr for a magnitude
+  # that does not fit one, and a library has no business writing there. The
+  # value is unchanged: it was an Infinity before and it is one now.
+  def test_a_date_too_large_for_a_float_converts_without_warning
+    warnings = capture_warnings do
+      assert_predicate IERS::TimeScale.to_mjd(mjd: 10**400), :infinite?
+    end
+
+    assert_empty warnings
+  end
+
+  def test_a_rational_date_too_large_for_a_float_converts_without_warning
+    warnings = capture_warnings do
+      converted = IERS::TimeScale.to_mjd(mjd: Rational(10**400))
+
+      assert_predicate converted, :infinite?
+    end
+
+    assert_empty warnings
+  end
+
+  # The other direction warns too, because Kernel#Float reads the numerator
+  # and the denominator.
+  def test_a_rational_date_too_small_for_a_float_converts_without_warning
+    warnings = capture_warnings do
+      assert_in_delta 0.0, IERS::TimeScale.to_mjd(mjd: Rational(1, 10**400))
+    end
+
+    assert_empty warnings
+  end
+
+  def test_a_negative_date_too_large_for_a_float_keeps_its_sign
+    assert_operator IERS::TimeScale.to_mjd(mjd: -(10**400)), :<, 0
+  end
+
+  def test_it_still_refuses_something_that_is_not_a_date
+    assert_raises(ArgumentError) { IERS::TimeScale.to_mjd(mjd: "abc") }
+    assert_raises(TypeError) { IERS::TimeScale.to_mjd(mjd: :soon) }
+  end
+
+  private
+
+  # Whatever the block wrote to stderr, with warnings turned on, since this is
+  # one Ruby only mentions in verbose mode.
+  #
+  # @return [String]
+  def capture_warnings
+    original, verbose = $stderr, $VERBOSE
+    $stderr = StringIO.new
+    $VERBOSE = true
+
+    begin
+      yield
+      $stderr.string
+    ensure
+      $stderr = original
+      $VERBOSE = verbose
+    end
   end
 end

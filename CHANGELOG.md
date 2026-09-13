@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- Reading a date too large or too small for a Float no longer writes to the
+  caller's stderr. `Kernel#Float` warns "Integer out of Float range" for such
+  a magnitude, and for a Rational whose numerator or denominator has one, so a
+  query far outside the data announced itself before being refused. An Integer
+  or a Rational is measured and converted directly now, which is quiet, while
+  everything else still goes through `Kernel#Float`, which is what refuses a
+  String or a Symbol. The values are unchanged: a magnitude past the range of
+  a Float was an Infinity before and is one now.
+
 ## 0.3.0 - 2026-09-06
 
 ### Fixed
