@@ -14,10 +14,10 @@ jobs:
     strategy:
       matrix:
         ruby:
-          - 3.2.10
-          - 3.3.10
-          - 3.4.8
-          - 4.0.1
+          - "3.2"
+          - "3.3"
+          - "3.4"
+          - "4.0"
 
     steps:
       - uses: actions/checkout@v6
@@ -41,7 +41,7 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: 3.4.8
+          ruby-version: "3.4"
           bundler-cache: true
       - name: RuboCop
         run: bundle exec rake rubocop
