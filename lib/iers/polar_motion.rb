@@ -83,7 +83,7 @@ module IERS
     def between(start_date, end_date)
       start_mjd = TimeScale.to_mjd(start_date)
       end_mjd = TimeScale.to_mjd(end_date)
-      entries = Data.finals_entries
+      entries = Data.eop_entries
 
       EopLookup
         .range(entries, start_mjd, end_mjd)

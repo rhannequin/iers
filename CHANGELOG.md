@@ -1,5 +1,44 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- EOP values for past dates now come from the IERS EOP 20 C04 series, the
+  reference series for past Earth orientation, published by the EOP Product
+  Center at Paris Observatory. Until now every value came from finals2000A,
+  whose Bulletin B columns hold the values as they were published at the time
+  and were never reprocessed onto ITRF2020. Polar motion, UT1−UTC and length
+  of day use C04 wherever it reaches, and so do the celestial pole offsets
+  from 1984, where C04 starts carrying them. finals2000A still covers the last
+  few weeks C04 hasn't reached and the predictions.
+
+  Results for past dates change. Against the Bulletin B values used before,
+  polar motion moves by around 50 µas after 2010, a few hundred µas between
+  1994 and 2009, and several mas before 1994; UT1−UTC by tens of µs after
+  1994 and up to about a millisecond before. Everything derived from them
+  moves with them: `DeltaT`, `EarthRotationAngle`, `GMST` and
+  `TerrestrialRotation`. Recent dates barely move, since Bulletin B is taken
+  from C04 nowadays. Set `eop_source = :finals` to get the previous values
+  back.
+
+  C04 only replaces finals2000A rows that are observed, so a C04 file newer
+  than the finals2000A one never overrides its predictions.
+
+- `Data.update!` with no arguments also downloads C04 (about 5 MB), and its
+  result is not successful if that download fails, even when the other files
+  were updated. Pass the sources you need, e.g. `Data.update!(:finals,
+  :leap_seconds)`, to keep the previous behaviour.
+
+### Added
+
+- `:c04` data source, downloaded by `Data.update!` from
+  `hpiers.obspm.fr/iers/eop/eopc04/eopc04.1962-now` and bundled with the gem.
+- `Configuration#eop_source` (`:c04` by default, or `:finals`) and
+  `Configuration#c04_path`.
+- `Data.c04_entries` for the raw C04 series and `Data.eop_entries` for the
+  series queries read from.
+
 ## 0.3.1 - 2026-09-13
 
 ### Fixed

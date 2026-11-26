@@ -27,17 +27,27 @@ Parameters** (EOP):
 
 ### Data files
 
-This library works with two data files published by the IERS:
+This library works with three data files published by the IERS:
 
 - **finals2000A** — a daily table spanning from 1973 to the present (plus
-  predictions ~1 year ahead). Each row contains polar motion, UT1−UTC, and
-  other EOP for one Modified Julian Date. Recent rows carry rapid "Series A"
-  values; older rows also include refined "Bulletin B" values.
+  predictions ~1 year ahead), from the USNO Rapid Service/Prediction Center.
+  Each row contains polar motion, UT1−UTC, and other EOP for one Modified
+  Julian Date. Recent rows carry rapid "Series A" values; older rows also
+  include "Bulletin B" values as they were published at the time.
+- **EOP 20 C04** — the IERS reference series for past EOP, from the EOP
+  Product Center at Paris Observatory. Daily values up to about a month
+  before today, consistent with ITRF2020. The file starts in 1962, but the
+  gem only uses it from 1973, where finals2000A starts.
 - **Leap_Second.dat** — the complete history of leap seconds with their
   effective dates and the cumulative TAI−UTC offset.
 
-Both files are downloaded automatically by `IERS::Data.update!` and cached
-locally.
+For every date C04 covers and finals2000A has observed values for, C04 is
+used for polar motion, UT1−UTC and length of day, and for the celestial pole
+offsets from 1984 on, where C04 starts carrying them. finals2000A covers the
+rest: the last few weeks not in C04 yet, and the predictions.
+
+All three files are downloaded automatically by `IERS::Data.update!` and
+cached locally.
 
 ## Installation
 
@@ -76,6 +86,7 @@ You can also update a single source:
 
 ```ruby
 IERS::Data.update!(:finals)
+IERS::Data.update!(:c04)
 IERS::Data.update!(:leap_seconds)
 ```
 
@@ -352,6 +363,7 @@ Point the gem at your own copies of the IERS data files:
 ```ruby
 IERS.configure do |config|
   config.finals_path = "/path/to/finals2000A.all"
+  config.c04_path = "/path/to/eopc04.1962-now"
   config.leap_second_path = "/path/to/Leap_Second.dat"
 end
 ```
@@ -364,8 +376,16 @@ IERS.configure do |config|
   config.interpolation = :linear   # default: :lagrange
   config.lagrange_order = 6        # default: 4
   config.download_timeout = 60     # default: 30 (seconds)
+  config.eop_source = :finals      # default: :c04
 end
 ```
+
+`eop_source = :finals` ignores C04 and reads every EOP value from
+finals2000A, preferring its Bulletin B values where a row has them.
+
+If the downloaded C04 file can't be read, queries use the bundled one, and
+finals2000A alone if that fails too. `IERS::Data.c04_entries` raises the
+underlying error if you want to check.
 
 To fully reset configuration and cached data:
 

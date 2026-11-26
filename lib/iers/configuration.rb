@@ -5,12 +5,15 @@ module IERS
     DEFAULT_CACHE_DIR = Pathname("~/.cache/iers").expand_path
     DEFAULT_SOURCES = {
       finals: "https://datacenter.iers.org/data/latestVersion/finals.all.iau2000.txt",
-      leap_seconds: "https://hpiers.obspm.fr/iers/bul/bulc/Leap_Second.dat"
+      leap_seconds: "https://hpiers.obspm.fr/iers/bul/bulc/Leap_Second.dat",
+      c04: "https://hpiers.obspm.fr/iers/eop/eopc04/eopc04.1962-now"
     }.freeze
     DEFAULT_DOWNLOAD_TIMEOUT = 30
     DEFAULT_INTERPOLATION = :lagrange
     DEFAULT_LAGRANGE_ORDER = 4
     INTERPOLATION_METHODS = %i[lagrange linear].freeze
+    DEFAULT_EOP_SOURCE = :c04
+    EOP_SOURCES = %i[c04 finals].freeze
 
     # @return [Pathname]
     attr_reader :cache_dir
@@ -22,6 +25,11 @@ module IERS
     attr_reader :finals_path
     # @return [Pathname, nil]
     attr_reader :leap_second_path
+    # @return [Pathname, nil]
+    attr_reader :c04_path
+    # @return [Symbol] +:c04+ to use the C04 series wherever it reaches,
+    #   or +:finals+ to use finals2000A only
+    attr_reader :eop_source
     # @return [Symbol] +:lagrange+ or +:linear+
     attr_reader :interpolation
     # @return [Integer]
@@ -33,6 +41,8 @@ module IERS
       @download_timeout = DEFAULT_DOWNLOAD_TIMEOUT
       @finals_path = nil
       @leap_second_path = nil
+      @c04_path = nil
+      @eop_source = DEFAULT_EOP_SOURCE
       @interpolation = DEFAULT_INTERPOLATION
       @lagrange_order = DEFAULT_LAGRANGE_ORDER
     end
@@ -66,6 +76,20 @@ module IERS
     def leap_second_path=(value)
       @leap_second_path = value && Pathname(value)
       invalidate(:leap_seconds)
+    end
+
+    def c04_path=(value)
+      @c04_path = value && Pathname(value)
+      invalidate(:c04)
+    end
+
+    def eop_source=(value)
+      unless EOP_SOURCES.include?(value)
+        raise ConfigurationError,
+          "eop_source must be one of: #{EOP_SOURCES.join(", ")}"
+      end
+
+      @eop_source = value
     end
 
     def interpolation=(value)

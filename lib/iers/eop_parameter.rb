@@ -7,7 +7,7 @@ module IERS
 
     def resolve(input, jd:, mjd:, interpolation:)
       query_mjd = TimeScale.to_mjd(input, jd: jd, mjd: mjd)
-      entries = Data.finals_entries
+      entries = Data.eop_entries
       method = interpolation || IERS.configuration.interpolation
 
       window = case method

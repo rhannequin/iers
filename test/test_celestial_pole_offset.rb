@@ -95,6 +95,7 @@ end
 class TestCelestialPoleOffsetAt < Minitest::Test
   def setup
     IERS.configure do |config|
+      config.eop_source = :finals
       config.finals_path = fixture_path("finals_10_days.dat")
       config.leap_second_path = fixture_path(
         "leap_second_query.dat"
@@ -189,6 +190,7 @@ end
 class TestCelestialPoleOffsetDataQuality < Minitest::Test
   def setup
     IERS.configure do |config|
+      config.eop_source = :finals
       config.finals_path = fixture_path(
         "finals_nutation_mixed.dat"
       )
@@ -240,6 +242,7 @@ end
 class TestCelestialPoleOffsetBetween < Minitest::Test
   def setup
     IERS.configure do |config|
+      config.eop_source = :finals
       config.finals_path = fixture_path("finals_10_days.dat")
       config.leap_second_path = fixture_path(
         "leap_second_query.dat"
@@ -351,6 +354,7 @@ end
 class TestCelestialPoleOffsetInterpolationOverride < Minitest::Test
   def setup
     IERS.configure do |config|
+      config.eop_source = :finals
       config.finals_path = fixture_path("finals_10_days.dat")
       config.leap_second_path = fixture_path("leap_second_query.dat")
     end
