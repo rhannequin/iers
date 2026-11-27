@@ -31,6 +31,20 @@ class TestTimeScale < Minitest::Test
     assert_in_delta 41317.5, result
   end
 
+  def test_a_time_keeps_the_precision_of_a_float_mjd
+    time = Time.utc(2026, 3, 14, 15, 9, Rational(26_535_897, 1_000_000))
+    exact = time.to_datetime.ajd - Rational(4_800_001, 2)
+
+    assert_equal exact.to_f, IERS::TimeScale.to_mjd(time)
+  end
+
+  def test_a_datetime_keeps_the_precision_of_a_float_mjd
+    datetime = DateTime.new(2026, 3, 14, 15, 9, Rational(26_535_897, 1_000_000))
+    exact = datetime.ajd - Rational(4_800_001, 2)
+
+    assert_equal exact.to_f, IERS::TimeScale.to_mjd(datetime)
+  end
+
   def test_converts_jd_keyword_to_mjd
     result = IERS::TimeScale.to_mjd(jd: 2441317.5)
 

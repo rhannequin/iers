@@ -6,6 +6,7 @@ module IERS
   # @api private
   module TimeScale
     JD_MJD_OFFSET = 2_400_000.5
+    JD_MJD_OFFSET_EXACT = Rational(4_800_001, 2)
     JD_J2000 = 2_451_545.0
     MJD_J2000 = 51_544.5
     DAYS_PER_JULIAN_CENTURY = 36_525.0
@@ -32,9 +33,9 @@ module IERS
       elsif jd
         to_float(jd) - JD_MJD_OFFSET
       elsif input.is_a?(Time)
-        input.to_datetime.ajd.to_f - JD_MJD_OFFSET
+        (input.to_datetime.ajd - JD_MJD_OFFSET_EXACT).to_f
       elsif input.is_a?(Date)
-        input.ajd.to_f - JD_MJD_OFFSET
+        (input.ajd - JD_MJD_OFFSET_EXACT).to_f
       else
         raise ArgumentError,
           "Expected Time, Date, DateTime, jd: or mjd: keyword, " \

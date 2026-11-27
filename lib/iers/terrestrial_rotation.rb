@@ -4,9 +4,10 @@ module IERS
   module TerrestrialRotation
     module_function
 
-    # Compute R(ERA) × W, the rotation from ITRS to TIRS
-    # (IERS Conventions 2010, eq. 5.1), combining the Earth Rotation
-    # Angle and polar motion matrices.
+    # Compute W × R3(ERA), the rotation from the CIRS to the ITRS
+    # (IERS Conventions 2010, eq. 5.1, transposed), combining the Earth
+    # Rotation Angle and the polar motion matrix. Matches ERFA's +c2tcio+ with
+    # the CIRS as the celestial frame.
     #
     # @param input [Time, Date, DateTime, nil]
     # @param jd [Float, nil] Julian Date
@@ -21,7 +22,7 @@ module IERS
         mjd: query_mjd, interpolation: interpolation
       )
 
-      multiply(r3_matrix(era), w)
+      multiply(w, r3_matrix(era))
     end
 
     def r3_matrix(angle)
