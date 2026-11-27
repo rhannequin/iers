@@ -94,9 +94,14 @@ to 2026, `EarthRotationAngle` and `GMST` match ERFA 2.0.1's `era00` and
 `gmst06` within 8 µas (RMS 2.7 µas), the resolution of a Modified Julian Date
 held in one Float. The polar motion matrix matches `pom00`, TIO locator s'
 included, to 5e-18 rad, and `TerrestrialRotation` matches `c2tcio` to the
-same few microarcseconds as ERA. `EarthRotationAngle` also matches all 368 daily values
-of the 2026 [Connaissance des temps] table within 7.9 µas (RMS 3.7 µas), for a
-table printed to 10 µas.
+same few microarcseconds as ERA. `EarthRotationAngle` also matches all 368
+daily values of the 2026 [Connaissance des temps] table within 7.9 µas
+(RMS 3.7 µas), for a table printed to 10 µas.
+
+These figures hold for a `Time`, `Date`, `DateTime` or `mjd:` query. A `jd:`
+Float carries a Julian Date around 2.4 million, whose resolution is about
+40 µs, so it can put ERA up to about 300 µas off: pass `mjd:` when that
+matters.
 
 ## Installation
 
