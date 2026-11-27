@@ -5,6 +5,7 @@ require "test_helper"
 class TestDeltaTAt < Minitest::Test
   def setup
     IERS.configure do |config|
+      config.eop_source = :finals
       config.finals_path = fixture_path("finals_10_days.dat")
       config.leap_second_path = fixture_path("leap_second_query.dat")
     end
@@ -214,6 +215,7 @@ end
 class TestDeltaTConsistency < Minitest::Test
   def setup
     IERS.configure do |config|
+      config.eop_source = :finals
       config.finals_path = fixture_path("finals_10_days.dat")
       config.leap_second_path = fixture_path("leap_second_query.dat")
     end
@@ -242,6 +244,7 @@ class TestDeltaTTruncatedSeries < Minitest::Test
   # gap, which must be reported as a DeltaT problem rather than an EOP one.
   def setup
     IERS.configure do |config|
+      config.eop_source = :finals
       config.finals_path = fixture_path("finals_leap_boundary.dat")
       config.leap_second_path = fixture_path("leap_second_query.dat")
     end
@@ -294,6 +297,7 @@ class TestDeltaTEmptySeries < Minitest::Test
     @empty = Tempfile.new(["finals_empty", ".dat"])
 
     IERS.configure do |config|
+      config.eop_source = :finals
       config.finals_path = Pathname(@empty.path)
     end
   end
@@ -324,6 +328,7 @@ class TestDeltaTMalformedSeries < Minitest::Test
   # consults the series for every query, so a pre-1986 date surfaces it too.
   def setup
     IERS.configure do |config|
+      config.eop_source = :finals
       config.finals_path = Pathname(__dir__).join("fixtures", "finals_malformed.dat")
     end
   end

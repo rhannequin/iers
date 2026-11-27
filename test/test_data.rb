@@ -86,7 +86,8 @@ class TestData < Minitest::Test
     assert_instance_of IERS::NetworkError, result.errors[:finals]
   end
 
-  def test_update_all_downloads_both_files
+  def test_update_all_downloads_all_files
+    stub_c04
     stub_request(
       :get,
       "https://datacenter.iers.org/data/latestVersion/finals.all.iau2000.txt"
@@ -98,9 +99,11 @@ class TestData < Minitest::Test
 
     assert_includes result.updated_files, :finals
     assert_includes result.updated_files, :leap_seconds
+    assert_includes result.updated_files, :c04
   end
 
   def test_update_all_with_partial_failure_still_writes_successful_file
+    stub_c04
     stub_request(
       :get,
       "https://datacenter.iers.org/data/latestVersion/finals.all.iau2000.txt"
@@ -114,6 +117,7 @@ class TestData < Minitest::Test
   end
 
   def test_update_all_with_partial_failure_is_not_successful
+    stub_c04
     stub_request(
       :get,
       "https://datacenter.iers.org/data/latestVersion/finals.all.iau2000.txt"
@@ -187,6 +191,7 @@ class TestData < Minitest::Test
   end
 
   def test_status_with_cached_files_is_cached
+    stub_c04
     stub_request(
       :get,
       "https://datacenter.iers.org/data/latestVersion/finals.all.iau2000.txt"
@@ -201,6 +206,7 @@ class TestData < Minitest::Test
   end
 
   def test_status_with_cached_files_has_numeric_cache_age
+    stub_c04
     stub_request(
       :get,
       "https://datacenter.iers.org/data/latestVersion/finals.all.iau2000.txt"
@@ -228,6 +234,7 @@ class TestData < Minitest::Test
   end
 
   def test_clear_cache_removes_cached_files
+    stub_c04
     stub_request(
       :get,
       "https://datacenter.iers.org/data/latestVersion/finals.all.iau2000.txt"
@@ -240,6 +247,7 @@ class TestData < Minitest::Test
 
     refute_path_exists Pathname(@tmpdir).join("finals2000A.all")
     refute_path_exists Pathname(@tmpdir).join("Leap_Second.dat")
+    refute_path_exists Pathname(@tmpdir).join("eopc04.1962-now")
   end
 
   def test_clear_cache_does_not_remove_custom_path_files
@@ -333,6 +341,11 @@ class TestData < Minitest::Test
   end
 
   private
+
+  def stub_c04
+    stub_request(:get, "https://hpiers.obspm.fr/iers/eop/eopc04/eopc04.1962-now")
+      .to_return(status: 200, body: "c04 data")
+  end
 
   def finals_line
     "73 1 2 41684.00 I  0.120733 0.009786  0.136966 0.015902  I 0.8084178 0.0002710  0.0000 0.1916  P    -0.766    0.199    -0.720    0.300   .143000   .137000   .8075000   -18.637    -3.667\n"

@@ -20,19 +20,19 @@ namespace :data do
     IERS.configure do |config|
       config.finals_path = File.join(data_dir, "finals2000A.all")
       config.leap_second_path = File.join(data_dir, "Leap_Second.dat")
+      config.c04_path = File.join(data_dir, "eopc04.1962-now")
     end
 
     result = IERS::Data.update!
 
-    unless result.success?
-      result.errors.each do |source, error|
-        warn "#{source}: #{error.class} - #{error.message}"
-      end
-      abort "IERS data update failed"
+    result.errors.each do |source, error|
+      warn "#{source}: #{error.class} - #{error.message}"
     end
+    abort "IERS data update failed" unless (result.errors.keys - [:c04]).empty?
 
     IERS::Data.ensure_fresh!(coverage_days_ahead: 90)
     IERS::Data.leap_second_entries
+    IERS::Data.c04_entries unless result.errors.key?(:c04)
 
     puts "Updated: #{result.updated_files.join(", ")}"
   end

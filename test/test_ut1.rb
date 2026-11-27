@@ -77,6 +77,7 @@ end
 class TestUT1At < Minitest::Test
   def setup
     IERS.configure do |config|
+      config.eop_source = :finals
       config.finals_path = fixture_path("finals_10_days.dat")
       config.leap_second_path = fixture_path("leap_second_query.dat")
     end
@@ -136,6 +137,7 @@ end
 class TestUT1AtDataQuality < Minitest::Test
   def setup
     IERS.configure do |config|
+      config.eop_source = :finals
       config.finals_path = fixture_path("finals_mixed_ip.dat")
       config.leap_second_path = fixture_path("leap_second_query.dat")
     end
@@ -213,6 +215,7 @@ end
 class TestUT1Between < Minitest::Test
   def setup
     IERS.configure do |config|
+      config.eop_source = :finals
       config.finals_path = fixture_path("finals_10_days.dat")
       config.leap_second_path = fixture_path("leap_second_query.dat")
     end
@@ -320,6 +323,7 @@ end
 class TestUT1InterpolationOverride < Minitest::Test
   def setup
     IERS.configure do |config|
+      config.eop_source = :finals
       config.finals_path = fixture_path("finals_10_days.dat")
       config.leap_second_path = fixture_path("leap_second_query.dat")
     end
@@ -394,6 +398,7 @@ end
 class TestUT1LeapSecondBoundary < Minitest::Test
   def setup
     IERS.configure do |config|
+      config.eop_source = :finals
       config.finals_path = fixture_path(
         "finals_leap_boundary.dat"
       )

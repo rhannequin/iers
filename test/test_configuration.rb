@@ -22,6 +22,8 @@ class TestConfiguration < Minitest::Test
       config.sources[:finals]
     assert_equal "https://hpiers.obspm.fr/iers/bul/bulc/Leap_Second.dat",
       config.sources[:leap_seconds]
+    assert_equal "https://hpiers.obspm.fr/iers/eop/eopc04/eopc04.1962-now",
+      config.sources[:c04]
   end
 
   def test_default_download_timeout
@@ -64,6 +66,38 @@ class TestConfiguration < Minitest::Test
 
     assert_instance_of Pathname, config.leap_second_path
     assert_equal Pathname("/opt/data/leap"), config.leap_second_path
+  end
+
+  def test_default_c04_path_is_nil
+    config = IERS::Configuration.new
+
+    assert_nil config.c04_path
+  end
+
+  def test_c04_path_assignment_coerces_to_pathname
+    config = IERS::Configuration.new
+    config.c04_path = "/opt/data/c04"
+
+    assert_equal Pathname("/opt/data/c04"), config.c04_path
+  end
+
+  def test_default_eop_source_is_c04
+    config = IERS::Configuration.new
+
+    assert_equal :c04, config.eop_source
+  end
+
+  def test_eop_source_can_be_set_to_finals
+    config = IERS::Configuration.new
+    config.eop_source = :finals
+
+    assert_equal :finals, config.eop_source
+  end
+
+  def test_eop_source_rejects_unknown_source
+    config = IERS::Configuration.new
+
+    assert_raises(IERS::ConfigurationError) { config.eop_source = :usno }
   end
 
   def test_download_timeout_must_be_positive

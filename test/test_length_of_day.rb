@@ -87,6 +87,7 @@ end
 class TestLengthOfDayAt < Minitest::Test
   def setup
     IERS.configure do |config|
+      config.eop_source = :finals
       config.finals_path = fixture_path("finals_10_days.dat")
       config.leap_second_path = fixture_path("leap_second_query.dat")
     end
@@ -152,6 +153,7 @@ end
 class TestLengthOfDayDataQuality < Minitest::Test
   def setup
     IERS.configure do |config|
+      config.eop_source = :finals
       config.finals_path = fixture_path("finals_lod_mixed.dat")
       config.leap_second_path = fixture_path("leap_second_query.dat")
     end
@@ -199,6 +201,7 @@ end
 class TestLengthOfDayBetween < Minitest::Test
   def setup
     IERS.configure do |config|
+      config.eop_source = :finals
       config.finals_path = fixture_path("finals_10_days.dat")
       config.leap_second_path = fixture_path("leap_second_query.dat")
     end
@@ -306,6 +309,7 @@ end
 class TestLengthOfDayInterpolationOverride < Minitest::Test
   def setup
     IERS.configure do |config|
+      config.eop_source = :finals
       config.finals_path = fixture_path("finals_10_days.dat")
       config.leap_second_path = fixture_path("leap_second_query.dat")
     end

@@ -81,7 +81,7 @@ module IERS
     # The EOP series is the better source wherever it reaches, so it is asked
     # first; the polynomial covers whatever is left within its own validity.
     def series_covers?(mjd)
-      entries = Data.finals_entries
+      entries = Data.eop_entries
       return false if entries.empty?
 
       mjd.between?(entries.first.mjd, entries.last.mjd)
@@ -96,7 +96,7 @@ module IERS
     end
 
     def raise_uncovered!(query_mjd)
-      entries = Data.finals_entries
+      entries = Data.eop_entries
       series =
         if entries.empty?
           "is empty"

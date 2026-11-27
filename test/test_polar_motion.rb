@@ -95,6 +95,7 @@ end
 class TestPolarMotionAt < Minitest::Test
   def setup
     IERS.configure do |config|
+      config.eop_source = :finals
       config.finals_path = fixture_path("finals_10_days.dat")
       config.leap_second_path = fixture_path(
         "leap_second_query.dat"
@@ -189,6 +190,7 @@ end
 class TestPolarMotionDataQuality < Minitest::Test
   def setup
     IERS.configure do |config|
+      config.eop_source = :finals
       config.finals_path = fixture_path("finals_mixed_ip.dat")
       config.leap_second_path = fixture_path(
         "leap_second_query.dat"
@@ -238,6 +240,7 @@ end
 class TestPolarMotionBetween < Minitest::Test
   def setup
     IERS.configure do |config|
+      config.eop_source = :finals
       config.finals_path = fixture_path("finals_10_days.dat")
       config.leap_second_path = fixture_path(
         "leap_second_query.dat"
@@ -350,6 +353,7 @@ end
 class TestPolarMotionInterpolationOverride < Minitest::Test
   def setup
     IERS.configure do |config|
+      config.eop_source = :finals
       config.finals_path = fixture_path("finals_10_days.dat")
       config.leap_second_path = fixture_path(
         "leap_second_query.dat"
@@ -481,6 +485,7 @@ end
 class TestPolarMotionRotationMatrixAt < Minitest::Test
   def setup
     IERS.configure do |config|
+      config.eop_source = :finals
       config.finals_path = fixture_path("finals_10_days.dat")
       config.leap_second_path = fixture_path(
         "leap_second_query.dat"

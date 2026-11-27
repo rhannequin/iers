@@ -4,20 +4,24 @@ module IERS
   module Data
     FILENAMES = {
       finals: "finals2000A.all",
-      leap_seconds: "Leap_Second.dat"
+      leap_seconds: "Leap_Second.dat",
+      c04: "eopc04.1962-now"
     }.freeze
+
+    C04_CELESTIAL_POLE_START_MJD = 45700.0
 
     BUNDLED_DIR = Pathname(__dir__).join("..", "..", "data").expand_path
 
     @mutex = Mutex.new
     @finals = nil
+    @eop = nil
     @leap_second_table = nil
 
     module_function
 
     # @return [Boolean]
     def loaded?
-      !@finals.nil? || !@leap_second_table.nil?
+      [@finals, @eop, @leap_second_table].any?
     end
 
     # @param sources [Array<Symbol>] data sources to update (default: all)
@@ -91,11 +95,24 @@ module IERS
 
     # @return [Array<Parsers::Finals::Entry>]
     def finals_entries
+      @mutex.synchronize { load_finals }
+    end
+
+    # @return [Array<Parsers::C04::Entry>]
+    def c04_entries
+      Parsers::C04.parse(resolve_read_path(:c04)).freeze
+    end
+
+    # @return [Array<Parsers::Finals::Entry>]
+    def eop_entries
+      source = IERS.configuration.eop_source
+
       @mutex.synchronize do
-        @finals ||= begin
-          path = resolve_read_path(:finals)
-          Parsers::Finals.parse(path).freeze
+        if @eop.nil? || @eop[:source] != source
+          @eop = {source: source, entries: build_eop_entries(source)}
         end
+
+        @eop[:entries]
       end
     end
 
@@ -126,7 +143,62 @@ module IERS
       when :leap_seconds
         config.leap_second_path ||
           config.cache_dir.join(FILENAMES[:leap_seconds])
+      when :c04
+        config.c04_path || config.cache_dir.join(FILENAMES[:c04])
       end
+    end
+
+    def load_finals
+      @finals ||= Parsers::Finals.parse(resolve_read_path(:finals)).freeze
+    end
+
+    def build_eop_entries(source)
+      return load_finals if source == :finals
+
+      finals = @finals || Parsers::Finals.parse(resolve_read_path(:finals))
+      c04 = read_c04
+      return finals.freeze if c04.nil?
+
+      by_mjd = c04.to_h { |entry| [entry.mjd, entry] }
+      finals.map { |entry| overlay_c04(entry, by_mjd[entry.mjd]) }.freeze
+    end
+
+    def read_c04
+      paths = [resolve_read_path(:c04), BUNDLED_DIR.join(FILENAMES[:c04])]
+
+      paths.uniq.each do |path|
+        return Parsers::C04.parse(path)
+      rescue DataError, SystemCallError
+        next
+      end
+
+      nil
+    end
+
+    def overlay_c04(entry, c04)
+      return entry if c04.nil?
+      return entry unless entry.pm_flag == "I" && entry.ut1_flag == "I"
+
+      values = {
+        pm_flag: "I",
+        pm_x: c04.pm_x, pm_x_error: c04.pm_x_error,
+        pm_y: c04.pm_y, pm_y_error: c04.pm_y_error,
+        ut1_flag: "I",
+        ut1_utc: c04.ut1_utc, ut1_utc_error: c04.ut1_utc_error,
+        lod: c04.lod * 1000, lod_error: c04.lod_error * 1000,
+        bulletin_b_pm_x: nil, bulletin_b_pm_y: nil, bulletin_b_ut1_utc: nil
+      }
+
+      if c04.mjd >= C04_CELESTIAL_POLE_START_MJD
+        values.merge!(
+          nutation_flag: "I",
+          dx: c04.dx * 1000, dx_error: c04.dx_error * 1000,
+          dy: c04.dy * 1000, dy_error: c04.dy_error * 1000,
+          bulletin_b_dx: nil, bulletin_b_dy: nil
+        )
+      end
+
+      entry.with(**values)
     end
 
     def resolve_read_path(source, config = IERS.configuration)
@@ -144,7 +216,7 @@ module IERS
     end
 
     def custom_paths_configured?(config)
-      config.finals_path || config.leap_second_path
+      config.finals_path || config.leap_second_path || config.c04_path
     end
 
     def cache_exists?(config)
@@ -172,6 +244,7 @@ module IERS
 
       @mutex.synchronize do
         @finals = nil if sources.include?(:finals)
+        @eop = nil if sources.intersect?(%i[finals c04])
         @leap_second_table = nil if sources.include?(:leap_seconds)
       end
 
@@ -192,6 +265,10 @@ module IERS
     private_class_method :validate_sources!,
       :resolve_path,
       :resolve_read_path,
+      :load_finals,
+      :read_c04,
+      :build_eop_entries,
+      :overlay_c04,
       :validate_source!,
       :custom_paths_configured?,
       :cache_exists?,
