@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "date"
+
 module C04
   Row = ::Data.define(:mjd, :x, :y, :ut1_utc)
 
@@ -19,6 +21,13 @@ module C04
         ut1_utc: Float(fields[7])
       )
     end
+  end
+
+  # @param path [String]
+  # @return [String] the file's modification date, which +curl -R+ sets to
+  #   the server's Last-Modified
+  def last_modified(path)
+    File.mtime(path).utc.to_date.iso8601
   end
 
   # @param path [String]

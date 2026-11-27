@@ -25,8 +25,12 @@ ruby script/references/cdt_era.rb CDT_2026_ebook.pdf \
   > test/fixtures/references/cdt_era.json
 ```
 
-The file dates recorded in each fixture's `source` are the `Last-Modified`
-headers of the downloads, and are set in the scripts: update them along with
-the files.
+The file dates recorded in each fixture's `source` are the files'
+modification dates. Download with `curl -R` so they match the server's
+`Last-Modified`:
+
+```sh
+curl -sSfLRO https://hpiers.obspm.fr/iers/eop/eopc04/eopc04.1962-now
+```
 
 [cdt]: https://www.imcce.fr/content/medias/publications/publications-institutionnelles/CDT_2026_ebook.pdf

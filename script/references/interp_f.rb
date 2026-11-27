@@ -21,9 +21,9 @@ leap_seconds = IERS::Parsers::LeapSecond
   .entries
   .map { |e| e.mjd.to_i }
 
-days = FIRST_DAY.step(rows.keys.max - 3, DAY_STEP).map do |day|
+days = FIRST_DAY.step(rows.keys.max - 3, DAY_STEP).filter_map do |day|
   day += 5 while leap_seconds.any? { |l| l > day - 1 && l <= day + 2 }
-  day
+  day if WINDOW.all? { |offset| rows.key?(day + offset) }
 end
 
 epochs = days.flat_map { |day| HOURS.map { |h| day + h / 24.0 } }
@@ -89,14 +89,14 @@ fixture = {
   "source" => {
     "interp_f" => {
       "url" => "https://hpiers.obspm.fr/iers/models/interp.f",
-      "last_modified" => "2022-06-14",
+      "last_modified" => C04.last_modified(interp_f),
       "compiler" => Open3.capture2("gfortran", "-dumpfullversion").first.strip
     },
     "c04_0h" => {
       "file" => File.basename(path_0h),
       "title" => C04.title(path_0h),
       "url" => "https://hpiers.obspm.fr/iers/eop/eopc04/eopc04.1962-now",
-      "last_modified" => "2026-11-26"
+      "last_modified" => C04.last_modified(path_0h)
     }
   },
   "corrections" => corrections,

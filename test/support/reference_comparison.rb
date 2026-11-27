@@ -8,6 +8,10 @@ module ReferenceComparison
   LEAP_SECONDS = Pathname(__dir__).join("..", "..", "data", "Leap_Second.dat")
   LEAP_SECOND_MJDS = IERS::Parsers::LeapSecond
     .parse(LEAP_SECONDS).entries.map(&:mjd).freeze
+  SETTINGS = %i[
+    cache_dir sources download_timeout finals_path leap_second_path c04_path
+    eop_source interpolation lagrange_order
+  ].freeze
 
   module_function
 
@@ -20,9 +24,12 @@ module ReferenceComparison
   # @param rows [Array<Array(Float, Float, Float, Float)>] MJD, x ("), y ("),
   #   UT1-UTC (s)
   # @param lagrange_order [Integer, nil]
-  # @yield with the gem reading +rows+ as its finals data
+  # @yield with the gem reading +rows+ as its finals data, and the caller's
+  #   configuration restored afterwards
   # @return [Object] the block's value
   def with_finals(rows, lagrange_order: nil)
+    saved = SETTINGS.to_h { |name| [name, IERS.configuration.public_send(name)] }
+
     Dir.mktmpdir do |dir|
       path = File.join(dir, "finals.dat")
       FinalsFile.write(path, rows)
@@ -34,7 +41,9 @@ module ReferenceComparison
       end
       yield
     ensure
-      IERS.reset_configuration!
+      IERS.configure do |config|
+        saved.each { |name, value| config.public_send(:"#{name}=", value) }
+      end
     end
   end
 

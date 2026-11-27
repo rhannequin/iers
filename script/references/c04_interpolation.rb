@@ -108,13 +108,13 @@ fixture = {
       "file" => File.basename(path_0h),
       "title" => C04.title(path_0h),
       "url" => "https://hpiers.obspm.fr/iers/eop/eopc04/eopc04.1962-now",
-      "last_modified" => "2026-11-26"
+      "last_modified" => C04.last_modified(path_0h)
     },
     "c04_12h" => {
       "file" => File.basename(path_12h),
       "title" => C04.title(path_12h),
       "url" => "https://hpiers.obspm.fr/iers/eop/eopc04/eopc04.12h.1984-now",
-      "last_modified" => "2026-11-26"
+      "last_modified" => C04.last_modified(path_12h)
     },
     "iers" => IERS::VERSION,
     "leap_seconds" => "data/Leap_Second.dat"

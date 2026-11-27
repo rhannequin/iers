@@ -1,4 +1,6 @@
+import datetime
 import json
+import os
 import sys
 
 import erfa
@@ -68,7 +70,9 @@ fixture = {
         "c04_0h": {
             "file": path_0h.rsplit("/", 1)[-1],
             "url": "https://hpiers.obspm.fr/iers/eop/eopc04/eopc04.1962-now",
-            "last_modified": "2026-11-26",
+            "last_modified": datetime.datetime.fromtimestamp(
+                os.path.getmtime(path_0h), datetime.timezone.utc
+            ).date().isoformat(),
         },
         "method": (
             "era00(2400000.5, mjd + ut1_utc / 86400); "

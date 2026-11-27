@@ -77,7 +77,7 @@ of several milliarcseconds, and from 2021 to 2024 the 0h pole values are
 themselves interpolated from the 12h ones.
 
 **Sub-daily corrections.** The IERS routine [`interp.f`] interpolates with the
-same 4-point Lagrange scheme, which the gem reproduces to 1e-8 µs, then adds
+same 4-point Lagrange scheme, which the gem reproduces to about 1e-8 µs, then adds
 the diurnal and semi-diurnal ocean tide terms and the libration terms. The gem
 leaves them out, which costs, over 400 epochs from 1984 to 2026:
 

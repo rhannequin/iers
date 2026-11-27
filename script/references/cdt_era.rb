@@ -70,7 +70,7 @@ fixture = {
     "title" => "Connaissance des temps #{YEAR}",
     "url" => "https://www.imcce.fr/content/medias/publications/" \
       "publications-institutionnelles/CDT_#{YEAR}_ebook.pdf",
-    "last_modified" => "2025-11-28",
+    "last_modified" => File.mtime(pdf).utc.to_date.iso8601,
     "pages" => "printed pages 10 to 13 (PDF pages " \
       "#{pages.first[1] + 1} to #{pages.last[1] + 1})",
     "extraction" => "pdftotext -raw " +

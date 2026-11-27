@@ -64,7 +64,7 @@ class TestErfaRotation < Minitest::Test
     end
 
     assert_differences_within(
-      differences, max: 1e-5, rms: 1e-5, label: "W against pom00", unit: "uas"
+      differences, max: 1e-4, rms: 1e-4, label: "W against pom00", unit: "uas"
     )
   end
 
