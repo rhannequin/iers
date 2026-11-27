@@ -49,6 +49,54 @@ rest: the last few weeks not in C04 yet, and the predictions.
 All three files are downloaded automatically by `IERS::Data.update!` and
 cached locally.
 
+### Accuracy
+
+The gem is checked against external references in `test/references/`. The
+reference values are generated once by the scripts in `script/references/`
+and frozen, with their provenance, in `test/fixtures/references/`.
+
+**Interpolation between daily values.** Besides the 0h UTC file the gem
+reads, the EOP Product Center publishes the same C04 solution sampled at 12h
+UTC. Interpolating the 0h series at noon and comparing with the 12h values
+measures the interpolation error directly, over the 15,637 noons from
+1984-01-01 to 2026-10-23:
+
+| Method               | UT1−UTC RMS | UT1−UTC 99th pct. | x, y RMS (1994–2020) |
+| -------------------- | ----------- | ----------------- | -------------------- |
+| `:linear`            | 19.4 µs     | 47.0 µs           | 54, 46 µas           |
+| `:lagrange`, order 4 | 6.6 µs      | 24.5 µs           | 34, 33 µas           |
+| `:lagrange`, order 6 | 6.5 µs      | 23.5 µs           | 30, 30 µas           |
+| `:lagrange`, order 8 | 6.5 µs      | 23.4 µs           | 28, 29 µas           |
+
+The default, Lagrange with 4 points, divides the UT1 error by three compared
+with linear interpolation; more points barely help. The largest differences,
+about 115 µs on UT1, come from a few stretches where the two C04 files
+disagree with each other rather than from the interpolation. The pole is
+compared from 1994 only: before that the series is noisier, with differences
+of several milliarcseconds, and from 2021 to 2024 the 0h pole values are
+themselves interpolated from the 12h ones.
+
+**Sub-daily corrections.** The IERS routine [`interp.f`] interpolates with the
+same 4-point Lagrange scheme, which the gem reproduces to 1e-8 µs, then adds
+the diurnal and semi-diurnal ocean tide terms and the libration terms. The gem
+leaves them out, which costs, over 400 epochs from 1984 to 2026:
+
+| Correction  | UT1−UTC max (RMS) | x max (RMS)     | y max (RMS)     |
+| ----------- | ----------------- | --------------- | --------------- |
+| Ocean tides | 82 µs (27 µs)     | 863 µas (320)   | 686 µas (239)   |
+| Libration   | n/a               | 41 µas (16)     | 40 µas (16)     |
+
+So between two daily values the ocean tides, not the interpolation, dominate
+the error on UT1-UTC and polar motion.
+
+**Rotation quantities.** Given the same UT1 and TT, over 215 dates from 1973
+to 2026, `EarthRotationAngle` and `GMST` match ERFA 2.0.1's `era00` and
+`gmst06` within 8 µas (RMS 2.7 µas), the resolution of a Modified Julian Date
+held in one Float. The polar motion matrix matches `pom00`, TIO locator s'
+included, to 5e-18 rad. `EarthRotationAngle` also matches all 368 daily values
+of the 2026 [Connaissance des temps] table within 7.9 µas (RMS 3.7 µas), for a
+table printed to 10 µas.
+
 ## Installation
 
 Install the gem and add to the application's Gemfile by executing:
@@ -433,6 +481,8 @@ rooms and mailing lists is expected to follow the [code of conduct].
 [IERS]: https://www.iers.org
 [IERS Earth Orientation Center]: https://hpiers.obspm.fr/eop-pc/
 [USNO Rapid Service/Prediction Center]: https://maia.usno.navy.mil/ser7/
+[`interp.f`]: https://hpiers.obspm.fr/iers/models/interp.f
+[Connaissance des temps]: https://www.imcce.fr/content/medias/publications/publications-institutionnelles/CDT_2026_ebook.pdf
 [Bundler]: https://bundler.io
 [rubygems.org]: https://rubygems.org
 [MIT License]: https://opensource.org/licenses/MIT
