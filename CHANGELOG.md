@@ -39,6 +39,16 @@
 - `Data.c04_entries` for the raw C04 series and `Data.eop_entries` for the
   series queries read from.
 
+### Fixed
+
+- `TerrestrialRotation.at` multiplied its two rotations in the wrong order,
+  R3(ERA) × W instead of W × R3(ERA), which put the result up to about 1"
+  away from the true rotation, depending on the size of polar motion. It now
+  returns the rotation from the CIRS to the ITRS, and matches ERFA's `c2tcio`
+  to a few microarcseconds. The documentation of `PolarMotion` now says which
+  way its matrix turns: from the TIRS to the ITRS, as ERFA's `pom00`, which
+  is the transpose of W in the IERS Conventions. Its values are unchanged.
+
 ## 0.3.1 - 2026-09-13
 
 ### Fixed

@@ -93,7 +93,8 @@ the error on UT1-UTC and polar motion.
 to 2026, `EarthRotationAngle` and `GMST` match ERFA 2.0.1's `era00` and
 `gmst06` within 8 µas (RMS 2.7 µas), the resolution of a Modified Julian Date
 held in one Float. The polar motion matrix matches `pom00`, TIO locator s'
-included, to 5e-18 rad. `EarthRotationAngle` also matches all 368 daily values
+included, to 5e-18 rad, and `TerrestrialRotation` matches `c2tcio` to the
+same few microarcseconds as ERA. `EarthRotationAngle` also matches all 368 daily values
 of the 2026 [Connaissance des temps] table within 7.9 µas (RMS 3.7 µas), for a
 table printed to 10 µas.
 
@@ -168,7 +169,9 @@ entries.count  # => 31
 
 #### Rotation matrix
 
-Compute the polar motion rotation matrix W (IERS Conventions 2010, §5.4.1):
+Compute the polar motion rotation matrix from the TIRS to the ITRS, including
+the TIO locator s'. It is ERFA's `pom00`, the transpose of W in IERS
+Conventions 2010, §5.4.1:
 
 ```ruby
 w = IERS::PolarMotion.rotation_matrix_at(Time.utc(2020, 6, 15))
@@ -261,8 +264,10 @@ IERS::GMST.at(Time.utc(2020, 6, 15))  # => radians, in [0, 2π)
 
 ### Terrestrial rotation matrix
 
-Compute R(ERA) × W, the rotation from ITRS to TIRS (IERS Conventions 2010,
-eq. 5.1), combining the Earth Rotation Angle and the polar motion matrix (W):
+Compute the rotation from the CIRS to the ITRS, combining the Earth Rotation
+Angle and the polar motion matrix above as W × R3(ERA), the transpose of
+R(t) W(t) in IERS Conventions 2010, eq. 5.1. It is ERFA's `c2tcio` with the
+CIRS as the celestial frame:
 
 ```ruby
 r = IERS::TerrestrialRotation.at(Time.utc(2020, 6, 15))

@@ -75,7 +75,7 @@ class TestTerrestrialRotationAt < Minitest::Test
 
     expected = Array.new(3) { |i|
       Array.new(3) { |j|
-        r3[i].zip(w.map { |row| row[j] }).sum { |a, b| a * b }
+        w[i].zip(r3.map { |row| row[j] }).sum { |a, b| a * b }
       }
     }
 

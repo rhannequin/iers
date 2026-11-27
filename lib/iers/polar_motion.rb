@@ -14,8 +14,9 @@ module IERS
       include HasDate
       include HasDataQuality
 
-      # Polar motion rotation matrix W per IERS Conventions 2010, Section 5.4.1:
-      # W = R3(-s') * R2(xp) * R1(yp)
+      # Polar motion rotation matrix from the TIRS to the ITRS, including the
+      # TIO locator s'. This is ERFA's +pom00+, the transpose of
+      # W = R3(-s') * R2(xp) * R1(yp) in IERS Conventions 2010, Section 5.4.1.
       #
       # All elements use exact trigonometry — no small-angle approximation.
       #

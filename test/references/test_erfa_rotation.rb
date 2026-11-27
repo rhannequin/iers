@@ -68,6 +68,22 @@ class TestErfaRotation < Minitest::Test
     )
   end
 
+  def test_terrestrial_rotation_matches_c2tcio
+    differences = collect do |reference|
+      matrix_difference(
+        IERS::TerrestrialRotation.at(mjd: reference["mjd"]),
+        reference["c2tcio"]
+      )
+    end
+
+    assert_differences_within(
+      differences,
+      max: 10, rms: 4,
+      label: "TerrestrialRotation against c2tcio",
+      unit: "uas"
+    )
+  end
+
   private
 
   def each_case(&block)
